@@ -73,6 +73,7 @@ if (-not $SkipInstaller) {
 }
 Write-Host "`n== Build outputs in $OutDir ==" -ForegroundColor Green
 Get-ChildItem $OutDir | Select-Object Name, @{n='MB';e={[math]::Round($_.Length/1MB)}} | Format-Table -AutoSize
-Get-ChildItem $OutDir -File -Filter "*$Version*" | Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } |
+Get-ChildItem $OutDir -File -Filter "*$Version*" | Where-Object Name -notlike "SHA256SUMS*" |
+    Get-FileHash -Algorithm SHA256 | ForEach-Object { "$($_.Hash)  $(Split-Path $_.Path -Leaf)" } |
     Set-Content "$OutDir\SHA256SUMS-$Version.txt" -Encoding ascii   # this version only; never hashes itself
 exit 0
