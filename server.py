@@ -118,7 +118,8 @@ def index():
 
 @app.get("/api/info")
 def info():
-    return {"device": engine.DEVICE, "gpu": engine.GPU_NAME, "output": str(engine.OUT), "formats": engine.FORMATS}
+    return {"device": engine.DEVICE, "gpu": engine.GPU_NAME, "output": str(engine.OUT), "formats": engine.FORMATS,
+            "version": feedback.APP_VERSION}   # the desktop launcher only reuses a server of its own version
 
 
 @app.post("/api/upload")

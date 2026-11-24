@@ -10,6 +10,7 @@ Closing the window stops the server and the AI engine.
     Mixlumo.exe --port 7861     use another port
 """
 import argparse
+import json
 import multiprocessing
 import os
 import shutil
@@ -71,12 +72,38 @@ def port_in_use(port):
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 
-def is_our_app(url, timeout=2):
+def running_version(url, timeout=2):
+    """Version of the Mixlumo server at url: None if it isn't Mixlumo, "" if it is but older than 1.2.1."""
     try:
         with urllib.request.urlopen(url + "/api/info", timeout=timeout) as r:  # noqa: S310 - fixed http://127.0.0.1 URL
-            return r.status == 200 and b'"formats"' in r.read()
+            info = json.loads(r.read()) if r.status == 200 else {}
     except Exception:
-        return False
+        return None
+    return str(info.get("version", "")) if isinstance(info, dict) and "formats" in info else None
+
+
+def is_our_app(url, timeout=2):
+    return running_version(url, timeout) is not None
+
+
+def choose_port(port, version, tries=20):
+    """Decide what to do when starting: ("reuse", port) shows an already running Mixlumo of this version;
+    ("start", port) starts a server. A different (e.g. older) Mixlumo on the port is never reused, so an
+    update can't silently show the old version; we start our own on the next free port instead.
+    ("busy", port): the port belongs to another program."""
+    if not port_in_use(port):
+        return "start", port
+    running = running_version(f"http://127.0.0.1:{port}")
+    if running is None:
+        return "busy", port
+    if running == version:
+        return "reuse", port
+    for p in range(port + 1, port + 1 + tries):
+        if not port_in_use(p):
+            print(f"Mixlumo {running or '(older)'} is already running on port {port}; "
+                  f"starting {version} on port {p}.", flush=True)
+            return "start", p
+    return "busy", port
 
 
 def wait_until_ready(url, timeout=120):
@@ -119,12 +146,17 @@ def main(argv=None):
     ap.add_argument("--server-only", action="store_true", help="run without opening a window")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", DEFAULT_PORT)))
     args = ap.parse_args(argv)
-    url = f"http://127.0.0.1:{args.port}"
+    from feedback import APP_VERSION  # small module, no heavy imports
 
-    if port_in_use(args.port):
-        if is_our_app(url) and not args.server_only:
-            open_window(url, data_dir() / "window-profile")  # already running: just show it
-            return 0
+    action, port = choose_port(args.port, APP_VERSION)
+    url = f"http://127.0.0.1:{port}"
+    if action == "reuse":
+        if args.server_only:
+            print(f"Mixlumo {APP_VERSION} is already running at {url}", file=sys.stderr)
+            return 2
+        open_window(url, data_dir() / "window-profile")  # this version is already running: just show it
+        return 0
+    if action == "busy":
         print(f"Port {args.port} is used by another program. Try: Mixlumo.exe --port {args.port + 1}",
               file=sys.stderr)
         return 2
@@ -133,7 +165,7 @@ def main(argv=None):
     print("Bundled resources:", configure_environment(bundle_dir()), flush=True)
 
     import server  # imported after the environment is configured
-    srv = server.create_server(args.port)
+    srv = server.create_server(port)
     t = threading.Thread(target=srv.run, daemon=True, name="web-server")
     t.start()
     if not wait_until_ready(url):

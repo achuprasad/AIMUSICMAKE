@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+- Opening Mixlumo while an **older** Mixlumo was still running showed the old one (it reused whatever
+  Mixlumo answered on port 7860), so after an update you could still be using the previous version.
+  The app now reports its version, and the launcher only reuses a running copy of the same version;
+  otherwise it starts its own on the next free port.
+
 ## 1.2.1 — 2026-11-24
 
 ### Fixed

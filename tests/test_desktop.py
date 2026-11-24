@@ -82,6 +82,63 @@ def test_refuses_port_used_by_another_program(capsys):
     assert "used by another program" in capsys.readouterr().err
 
 
+class _FakeMixlumo:
+    """A tiny HTTP server answering /api/info like a running Mixlumo of a given version."""
+
+    def __init__(self, info):
+        import json
+        import threading
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        body = json.dumps(info).encode()
+
+        class H(BaseHTTPRequestHandler):
+            def do_GET(self):  # noqa: N802 - http.server API
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(body)
+
+            def log_message(self, *a):
+                pass
+        self.srv = ThreadingHTTPServer(("127.0.0.1", 0), H)
+        self.port = self.srv.server_address[1]
+        threading.Thread(target=self.srv.serve_forever, daemon=True).start()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        self.srv.shutdown()
+        self.srv.server_close()
+
+
+def test_same_version_already_running_is_reused():
+    with _FakeMixlumo({"formats": ["wav"], "version": "9.9.9"}) as f:
+        assert desktop.running_version(f"http://127.0.0.1:{f.port}") == "9.9.9"
+        assert desktop.choose_port(f.port, "9.9.9") == ("reuse", f.port)
+
+
+@pytest.mark.parametrize("info", [{"formats": ["wav"], "version": "1.2.0"}, {"formats": ["wav"]}])
+def test_other_or_older_version_is_never_reused(info, capsys):
+    """Regression: an old Mixlumo (here 1.1.0, which reports no version) left running on the port was
+    shown instead of the newly installed app, so the user tested old code."""
+    with _FakeMixlumo(info) as f:
+        action, port = desktop.choose_port(f.port, "9.9.9")
+        assert action == "start" and port != f.port and not desktop.port_in_use(port)
+    assert "starting 9.9.9 on port" in capsys.readouterr().out
+
+
+def test_free_port_is_started_and_foreign_port_is_busy():
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    assert desktop.choose_port(port, "1.0") == ("start", port)
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        s.listen()
+        p = s.getsockname()[1]
+        assert desktop.choose_port(p, "1.0") == ("busy", p)
+
+
 def test_wait_until_ready_times_out_quickly():
     assert desktop.wait_until_ready("http://127.0.0.1:9", timeout=0.5) is False
 

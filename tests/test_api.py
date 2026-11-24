@@ -46,8 +46,10 @@ def test_index_page(client):
 
 def test_info(client):
     j = client.get("/api/info").json()
-    assert set(j) == {"device", "gpu", "output", "formats"}
+    assert set(j) == {"device", "gpu", "output", "formats", "version"}
     assert j["device"] in ("cuda", "cpu") and j["formats"] == engine.FORMATS
+    import feedback
+    assert j["version"] == feedback.APP_VERSION   # the launcher compares it before reusing a running app
 
 
 def test_info_leaks_no_secrets(client):
