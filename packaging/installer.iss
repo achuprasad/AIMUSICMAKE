@@ -38,9 +38,20 @@ DiskSpanning=yes
 DiskSliceSize=2000000000
 CloseApplications=yes
 DisableProgramGroupPage=yes
+; 1.0.0 was called "Local Audio Studio": always use the new folder and Start-menu name instead of
+; reusing the previous ones, and clean the old ones up in [InstallDelete]
+UsePreviousAppDir=no
+UsePreviousGroup=no
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription: "Additional shortcuts:"
+
+[InstallDelete]
+; upgrade from Local Audio Studio 1.0.0: remove the old program files and shortcuts (never user songs,
+; which live in the Music folder)
+Type: filesandordirs; Name: "{autopf}\Local Audio Studio"
+Type: filesandordirs; Name: "{userprograms}\Local Audio Studio"
+Type: files; Name: "{userdesktop}\Local Audio Studio.lnk"
 
 [Files]
 Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs

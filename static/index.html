@@ -124,7 +124,8 @@ main{padding:30px 40px 60px;max-width:1180px;width:100%}
 .opt span{color:var(--muted);font-size:12.5px}
 .tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px;background:rgba(34,197,94,.14);color:var(--ok-text)}
 .tag.b{background:rgba(79,140,255,.15);color:var(--info-text)}
-.seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.seg{display:flex;flex-wrap:wrap;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.stack>*,.grid>*{min-width:0}
 .seg button{flex:1;border:0;background:none;padding:7px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;transition:.15s}
 .seg button:hover{color:var(--text)}
 .seg button.sel{background:var(--surface-3);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.4)}
@@ -247,7 +248,7 @@ details.faq[open] summary::after{content:"\2212"}
 details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--surface-3);border:1px solid var(--border-2);padding:11px 16px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(120%);opacity:0;transition:.25s;z-index:9;font-weight:500}
 .toast.show{transform:none;opacity:1}
-@media (max-width:980px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.grid{grid-template-columns:1fr}main{padding:20px}.kv{grid-template-columns:1fr 1fr}.stem{grid-template-columns:1fr}}
+@media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}.side{position:static;height:auto}.grid{grid-template-columns:minmax(0,1fr)}main{padding:20px}.kv{grid-template-columns:1fr 1fr}.stem{grid-template-columns:1fr}}
 </style>
 </head>
 <body>

@@ -89,6 +89,19 @@ def test_every_page_renders_in_light_theme(page, app_url, errors):
     assert not errors
 
 
+@pytest.mark.parametrize("w", [320, 375])
+def test_no_sideways_scroll_with_wcag_text_spacing(page, app_url, w):
+    """Regression (found by CI on Linux, whose fonts are wider): Help & Feedback overflowed 8 px at 375 px.
+    WCAG 1.4.12 text spacing makes text wider on every OS, so this catches it on Windows too."""
+    page.set_viewport_size({"width": w, "height": 800})
+    page.goto(app_url)
+    page.add_style_tag(content="*{letter-spacing:.12em!important;word-spacing:.16em!important;line-height:1.5!important}")
+    for name in ("split", "pitch", "analyze", "cut", "join", "convert", "support"):
+        page.click(f'nav button[data-page="{name}"]')
+        over = page.evaluate("document.documentElement.scrollWidth - window.innerWidth")
+        assert over <= 1, f"{name} overflows by {over}px at {w}px with WCAG text spacing"
+
+
 def test_brand_and_search_tags(page, app_url):
     page.goto(app_url)
     meta = page.evaluate("""() => Object.fromEntries([...document.querySelectorAll('meta[name], meta[property]')]

@@ -16,6 +16,16 @@ function Check($name, $cond, $detail = "") {
 }
 $uninstKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\{8F3B9C2E-6A1D-4E7B-9C55-2D4A7E1B3F90}_is1"
 
+# Safety: the test installs and UNINSTALLS a copy with the real app ID and shortcut names. If the user has
+# Mixlumo installed, or an installer is running, the test would remove their shortcuts and Apps entry
+# (this happened once). Refuse to run in that case.
+$busy = Get-Process | Where-Object { $_.ProcessName -match "^(Mixlumo-Setup|LocalAudioStudio-Setup|unins\d+)" }
+$userLnk = Join-Path ([Environment]::GetFolderPath("Desktop")) "Mixlumo.lnk"
+if ((Test-Path $uninstKey) -or (Test-Path $userLnk) -or $busy) {
+    Write-Host "REFUSED: Mixlumo is installed on this PC or an installer is running. Test on a clean PC/VM, or uninstall first." -ForegroundColor Red
+    exit 3
+}
+
 # ---- install ----------------------------------------------------------------------------
 $t = Get-Date
 $p = Start-Process -FilePath $Setup -ArgumentList "/VERYSILENT", "/CURRENTUSER", "/SUPPRESSMSGBOXES", "/NORESTART",
