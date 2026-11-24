@@ -1,0 +1,36 @@
+[project]
+name = "local-audio-studio"
+version = "2.0.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 125
+target-version = "py312"
+
+[tool.ruff.lint]
+# E/W/F: errors, B: bugbear, I: imports, UP: modern syntax, ASYNC: event-loop blocking,
+# S: bandit security rules, PLW: pylint warnings
+select = ["E", "W", "F", "B", "I", "UP", "ASYNC", "S", "PLW"]
+ignore = [
+    "S603", "S607",  # ffmpeg/nvidia-smi run from PATH with argument lists, never a shell
+    "S110",          # deliberate best-effort fallbacks (GPU name, model cleanup)
+    "S311",          # random is not used for security
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S108", "PLW1510", "E402"]  # asserts and temp paths are the point of tests
+"benchmarks/**" = ["E402"]  # sys.path set-up must precede local imports
+"scripts/**" = ["S310", "S108"]  # smoke tests call the app on a fixed http://127.0.0.1 port
+"packaging/**" = ["F821"]  # PyInstaller injects Analysis/EXE/... into spec files
+
+[tool.mypy]
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.coverage.run]
+source = ["engine", "server", "gpu_worker", "desktop"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

@@ -1,0 +1,1427 @@
+{
+ "summary": [
+  {
+   "model": "BS-RoFormer",
+   "speed": "fast",
+   "tracks": 6,
+   "rtf_median": 1.547,
+   "seconds_per_minute_audio": 92.8,
+   "gpu_mb_max": 946,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 7,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "accompaniment": [
+     16.29,
+     6
+    ],
+    "vocals": [
+     12.48,
+     6
+    ]
+   },
+   "leakage": {
+    "accompaniment": [
+     -30.1,
+     6
+    ],
+    "vocals": [
+     -29.2,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 8.0 dB": true,
+    "accompaniment SDR >= 13.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  },
+  {
+   "model": "BS-RoFormer",
+   "speed": "balanced",
+   "tracks": 6,
+   "rtf_median": 2.402,
+   "seconds_per_minute_audio": 144.1,
+   "gpu_mb_max": 946,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 10,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "accompaniment": [
+     16.35,
+     6
+    ],
+    "vocals": [
+     12.51,
+     6
+    ]
+   },
+   "leakage": {
+    "accompaniment": [
+     -30.15,
+     6
+    ],
+    "vocals": [
+     -29.15,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 8.0 dB": true,
+    "accompaniment SDR >= 13.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  },
+  {
+   "model": "BS-RoFormer",
+   "speed": "best",
+   "tracks": 6,
+   "rtf_median": 4.354,
+   "seconds_per_minute_audio": 261.3,
+   "gpu_mb_max": 946,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 17,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "accompaniment": [
+     16.36,
+     6
+    ],
+    "vocals": [
+     12.54,
+     6
+    ]
+   },
+   "leakage": {
+    "accompaniment": [
+     -30.05,
+     6
+    ],
+    "vocals": [
+     -29.15,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 8.0 dB": true,
+    "accompaniment SDR >= 13.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  },
+  {
+   "model": "Mel-Band RoFormer",
+   "speed": "balanced",
+   "tracks": 6,
+   "rtf_median": 1.655,
+   "seconds_per_minute_audio": 99.3,
+   "gpu_mb_max": 1238,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 10,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "accompaniment": [
+     14.66,
+     6
+    ],
+    "vocals": [
+     11.43,
+     6
+    ]
+   },
+   "leakage": {
+    "accompaniment": [
+     -26.7,
+     6
+    ],
+    "vocals": [
+     -26.0,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 7.0 dB": true,
+    "accompaniment SDR >= 12.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  },
+  {
+   "model": "Demucs 2-stem",
+   "speed": "balanced",
+   "tracks": 6,
+   "rtf_median": 0.23,
+   "seconds_per_minute_audio": 13.8,
+   "gpu_mb_max": 551,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 5,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "accompaniment": [
+     12.8,
+     6
+    ],
+    "vocals": [
+     9.23,
+     6
+    ]
+   },
+   "leakage": {
+    "accompaniment": [
+     -22.65,
+     6
+    ],
+    "vocals": [
+     -21.95,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 6.0 dB": true,
+    "accompaniment SDR >= 11.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  },
+  {
+   "model": "Demucs 4-stem",
+   "speed": "balanced",
+   "tracks": 6,
+   "rtf_median": 0.255,
+   "seconds_per_minute_audio": 15.3,
+   "gpu_mb_max": 551,
+   "all_progress_monotonic": true,
+   "min_progress_updates": 7,
+   "sample_rates": [
+    44100
+   ],
+   "channels": [
+    2
+   ],
+   "max_len_diff_samples": 0,
+   "clipped_samples": 0,
+   "sdr": {
+    "bass": [
+     11.08,
+     6
+    ],
+    "drums": [
+     7.07,
+     6
+    ],
+    "other": [
+     5.0,
+     6
+    ],
+    "vocals": [
+     9.32,
+     6
+    ]
+   },
+   "leakage": {
+    "vocals": [
+     -21.9,
+     6
+    ]
+   },
+   "checks": {
+    "vocals SDR >= 6.0 dB": true,
+    "drums SDR >= 5.0 dB": true,
+    "bass SDR >= 3.0 dB": true,
+    "GPU memory <= 3800 MB": true,
+    "44.1 kHz stereo output": true,
+    "Output length = input length (\u00b11 sample)": true,
+    "No clipped samples": true,
+    "Progress reported and monotonic": true
+   }
+  }
+ ],
+ "raw": [
+  {
+   "model": "BS-RoFormer",
+   "speed": "fast",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 10.45,
+     "rtf": 1.537,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.613,
+       "sdr": 11.51,
+       "leakage_db": -24.5
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.529,
+       "sdr": 12.39,
+       "leakage_db": -27.1
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 10.54,
+     "rtf": 1.55,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.409,
+       "sdr": 13.46,
+       "leakage_db": -31.2
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.585,
+       "sdr": 16.42,
+       "leakage_db": -33.0
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 10.62,
+     "rtf": 1.561,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.516,
+       "sdr": 14.91,
+       "leakage_db": -31.6
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.761,
+       "sdr": 16.49,
+       "leakage_db": -35.6
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 10.54,
+     "rtf": 1.55,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.332,
+       "sdr": 15.49,
+       "leakage_db": -43.7
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.831,
+       "sdr": 23.3,
+       "leakage_db": -41.8
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 10.5,
+     "rtf": 1.544,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.321,
+       "sdr": 9.69,
+       "leakage_db": -27.2
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.728,
+       "sdr": 16.16,
+       "leakage_db": -27.2
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 10.5,
+     "rtf": 1.545,
+     "gpu_mb": 946,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.243,
+       "sdr": 8.48,
+       "leakage_db": -26.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.815,
+       "sdr": 13.71,
+       "leakage_db": -24.9
+      }
+     }
+    }
+   ]
+  },
+  {
+   "model": "BS-RoFormer",
+   "speed": "balanced",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 16.22,
+     "rtf": 2.386,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.611,
+       "sdr": 11.55,
+       "leakage_db": -24.6
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.53,
+       "sdr": 12.43,
+       "leakage_db": -27.0
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 16.33,
+     "rtf": 2.401,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.406,
+       "sdr": 13.47,
+       "leakage_db": -31.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.585,
+       "sdr": 16.42,
+       "leakage_db": -32.8
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 16.41,
+     "rtf": 2.413,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.516,
+       "sdr": 14.99,
+       "leakage_db": -31.8
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.761,
+       "sdr": 16.56,
+       "leakage_db": -35.6
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 16.47,
+     "rtf": 2.422,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.338,
+       "sdr": 15.54,
+       "leakage_db": -44.6
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.834,
+       "sdr": 23.34,
+       "leakage_db": -41.7
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 16.34,
+     "rtf": 2.403,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.324,
+       "sdr": 9.82,
+       "leakage_db": -27.0
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.731,
+       "sdr": 16.28,
+       "leakage_db": -27.5
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 16.22,
+     "rtf": 2.386,
+     "gpu_mb": 946,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.245,
+       "sdr": 8.52,
+       "leakage_db": -26.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.814,
+       "sdr": 13.74,
+       "leakage_db": -25.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "model": "BS-RoFormer",
+   "speed": "best",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 30.18,
+     "rtf": 4.438,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.612,
+       "sdr": 11.57,
+       "leakage_db": -24.5
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.531,
+       "sdr": 12.45,
+       "leakage_db": -27.0
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 29.84,
+     "rtf": 4.388,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.406,
+       "sdr": 13.5,
+       "leakage_db": -31.2
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.58,
+       "sdr": 16.45,
+       "leakage_db": -32.9
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 29.66,
+     "rtf": 4.362,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.516,
+       "sdr": 15.01,
+       "leakage_db": -31.8
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.762,
+       "sdr": 16.57,
+       "leakage_db": -35.7
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 29.56,
+     "rtf": 4.347,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.335,
+       "sdr": 15.53,
+       "leakage_db": -44.7
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.835,
+       "sdr": 23.33,
+       "leakage_db": -41.7
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 29.38,
+     "rtf": 4.321,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.324,
+       "sdr": 9.81,
+       "leakage_db": -27.1
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.728,
+       "sdr": 16.27,
+       "leakage_db": -27.2
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 29.47,
+     "rtf": 4.333,
+     "gpu_mb": 946,
+     "progress_updates": 17,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.242,
+       "sdr": 8.56,
+       "leakage_db": -26.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.814,
+       "sdr": 13.76,
+       "leakage_db": -25.0
+      }
+     }
+    }
+   ]
+  },
+  {
+   "model": "Mel-Band RoFormer",
+   "speed": "balanced",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 11.23,
+     "rtf": 1.651,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.609,
+       "sdr": 10.29,
+       "leakage_db": -21.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.49,
+       "sdr": 11.24,
+       "leakage_db": -23.8
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 11.19,
+     "rtf": 1.645,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.413,
+       "sdr": 12.68,
+       "leakage_db": -29.7
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.577,
+       "sdr": 15.76,
+       "leakage_db": -30.9
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 11.3,
+     "rtf": 1.661,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.517,
+       "sdr": 13.19,
+       "leakage_db": -28.6
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.761,
+       "sdr": 14.95,
+       "leakage_db": -29.6
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 11.19,
+     "rtf": 1.645,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.35,
+       "sdr": 12.58,
+       "leakage_db": -33.8
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.84,
+       "sdr": 20.66,
+       "leakage_db": -34.7
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 11.38,
+     "rtf": 1.674,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.305,
+       "sdr": 7.8,
+       "leakage_db": -22.5
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.718,
+       "sdr": 14.38,
+       "leakage_db": -22.5
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 11.28,
+     "rtf": 1.658,
+     "gpu_mb": 1238,
+     "progress_updates": 10,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.232,
+       "sdr": 7.44,
+       "leakage_db": -23.4
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.83,
+       "sdr": 12.93,
+       "leakage_db": -21.3
+      }
+     }
+    }
+   ]
+  },
+  {
+   "model": "Demucs 2-stem",
+   "speed": "balanced",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 1.67,
+     "rtf": 0.245,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.568,
+       "sdr": 9.38,
+       "leakage_db": -17.9
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.489,
+       "sdr": 10.31,
+       "leakage_db": -21.1
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 1.56,
+     "rtf": 0.23,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.404,
+       "sdr": 10.98,
+       "leakage_db": -25.7
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.564,
+       "sdr": 14.23,
+       "leakage_db": -25.7
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 1.7,
+     "rtf": 0.25,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.495,
+       "sdr": 11.5,
+       "leakage_db": -24.7
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.76,
+       "sdr": 13.29,
+       "leakage_db": -24.2
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 1.56,
+     "rtf": 0.229,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.367,
+       "sdr": 9.07,
+       "leakage_db": -26.6
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.816,
+       "sdr": 17.16,
+       "leakage_db": -28.7
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 1.57,
+     "rtf": 0.23,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.293,
+       "sdr": 5.67,
+       "leakage_db": -18.3
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.707,
+       "sdr": 12.31,
+       "leakage_db": -17.6
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 1.51,
+     "rtf": 0.222,
+     "gpu_mb": 551,
+     "progress_updates": 5,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.274,
+       "sdr": 6.18,
+       "leakage_db": -19.2
+      },
+      "accompaniment": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.857,
+       "sdr": 12.08,
+       "leakage_db": -18.4
+      }
+     }
+    }
+   ]
+  },
+  {
+   "model": "Demucs 4-stem",
+   "speed": "balanced",
+   "rows": [
+    {
+     "track": "Al James - Schoolboy Facination.stem.mp4",
+     "seconds": 1.54,
+     "rtf": 0.226,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.559,
+       "sdr": 9.41,
+       "leakage_db": -17.9
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.377,
+       "sdr": 6.49
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.213,
+       "sdr": 13.92
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.252,
+       "sdr": 5.79
+      }
+     }
+    },
+    {
+     "track": "AM Contra - Heart Peripheral.stem.mp4",
+     "seconds": 1.73,
+     "rtf": 0.255,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.407,
+       "sdr": 10.99,
+       "leakage_db": -25.3
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.489,
+       "sdr": 7.65
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.262,
+       "sdr": 2.94
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.131,
+       "sdr": 0.73
+      }
+     }
+    },
+    {
+     "track": "Angels In Amplifiers - I'm Alright.stem.mp4",
+     "seconds": 1.71,
+     "rtf": 0.251,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.49,
+       "sdr": 11.43,
+       "leakage_db": -24.4
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.453,
+       "sdr": 6.14
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.201,
+       "sdr": 9.23
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.625,
+       "sdr": 7.51
+      }
+     }
+    },
+    {
+     "track": "Arise - Run Run Run.stem.mp4",
+     "seconds": 1.73,
+     "rtf": 0.255,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.358,
+       "sdr": 9.22,
+       "leakage_db": -27.0
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.765,
+       "sdr": -3.16
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.303,
+       "sdr": 12.93
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.531,
+       "sdr": 1.02
+      }
+     }
+    },
+    {
+     "track": "Ben Carrigan - We'll Talk About It All Tonight.stem.mp4",
+     "seconds": 1.82,
+     "rtf": 0.267,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.292,
+       "sdr": 5.73,
+       "leakage_db": -18.4
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.647,
+       "sdr": 9.73
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.302,
+       "sdr": 14.5
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.283,
+       "sdr": 5.2
+      }
+     }
+    },
+    {
+     "track": "BKS - Bulldozer.stem.mp4",
+     "seconds": 2.14,
+     "rtf": 0.315,
+     "gpu_mb": 551,
+     "progress_updates": 7,
+     "progress_monotonic": true,
+     "stems": {
+      "vocals": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.27,
+       "sdr": 6.26,
+       "leakage_db": -19.4
+      },
+      "drums": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.702,
+       "sdr": 9.46
+      },
+      "bass": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.3,
+       "sdr": 8.32
+      },
+      "other": {
+       "sample_rate": 44100,
+       "channels": 2,
+       "len_diff_samples": 0,
+       "clipped": 0,
+       "peak": 0.307,
+       "sdr": 4.79
+      }
+     }
+    }
+   ]
+  }
+ ]
+}

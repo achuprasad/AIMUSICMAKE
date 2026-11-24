@@ -1,0 +1,158 @@
+"""Windows desktop entry point for Local Audio Studio.
+
+Starts the local server in the background and opens the UI in its own window
+(Microsoft Edge "app mode": no address bar or tabs; Edge ships with Windows 10/11).
+Closing the window stops the server and the AI engine.
+
+    LocalAudioStudio.exe                 normal start
+    LocalAudioStudio.exe --server-only   no window (used by automated tests)
+    LocalAudioStudio.exe --port 7861     use another port
+"""
+import argparse
+import multiprocessing
+import os
+import shutil
+import socket
+import subprocess
+import sys
+import threading
+import time
+import urllib.request
+import webbrowser
+from pathlib import Path
+
+APP_NAME = "Local Audio Studio"
+DEFAULT_PORT = 7860
+
+
+def bundle_dir():
+    """Folder holding bundled resources (PyInstaller's _internal folder when frozen)."""
+    return Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+
+
+def data_dir():
+    """Per-user writable folder for logs and the window profile."""
+    d = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "LocalAudioStudio"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def configure_environment(base):
+    """Point the engine at bundled ffmpeg and models so the app works offline. Returns what was set."""
+    set_ = {}
+    bundled = base / "bundled"
+    if (bundled / "bin" / "ffmpeg.exe").exists():
+        os.environ["PATH"] = str(bundled / "bin") + os.pathsep + os.environ.get("PATH", "")
+        set_["ffmpeg"] = str(bundled / "bin" / "ffmpeg.exe")
+    if (bundled / "models").is_dir():
+        os.environ.setdefault("AUDIO_STUDIO_MODELS", str(bundled / "models"))
+        set_["models"] = os.environ["AUDIO_STUDIO_MODELS"]
+    if (bundled / "torch_home").is_dir():
+        os.environ.setdefault("TORCH_HOME", str(bundled / "torch_home"))
+        set_["torch_home"] = os.environ["TORCH_HOME"]
+    return set_
+
+
+def redirect_output(log_dir):
+    """A windowed .exe has no console: send output to a log file instead of losing it (or crashing on None)."""
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log = open(log_dir / "app.log", "a", encoding="utf-8", buffering=1)  # noqa: SIM115 - lives for the whole process
+    if sys.stdout is None or getattr(sys, "frozen", False):
+        sys.stdout = log
+    if sys.stderr is None or getattr(sys, "frozen", False):
+        sys.stderr = log
+    print(f"\n==== {APP_NAME} started {time.strftime('%Y-%m-%d %H:%M:%S')} ====", flush=True)
+    return log
+
+
+def port_in_use(port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+
+def is_our_app(url, timeout=2):
+    try:
+        with urllib.request.urlopen(url + "/api/info", timeout=timeout) as r:  # noqa: S310 - fixed http://127.0.0.1 URL
+            return r.status == 200 and b'"formats"' in r.read()
+    except Exception:
+        return False
+
+
+def wait_until_ready(url, timeout=120):
+    t = time.time()
+    while time.time() - t < timeout:
+        if is_our_app(url, timeout=1):
+            return True
+        time.sleep(0.3)
+    return False
+
+
+def find_edge():
+    candidates = [
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Microsoft/Edge/Application/msedge.exe",
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")) / "Microsoft/Edge/Application/msedge.exe",
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c)
+    return shutil.which("msedge")
+
+
+def open_window(url, profile_dir):
+    """Open the app window and block until the user closes it. Falls back to the default browser."""
+    edge = find_edge()
+    if edge:
+        # A dedicated profile makes Edge start its own process for this window, so wait() returns on close.
+        proc = subprocess.Popen([edge, f"--app={url}", f"--user-data-dir={profile_dir}", "--no-first-run",
+                                 "--no-default-browser-check", "--window-size=1400,900"])
+        proc.wait()
+        return "edge"
+    webbrowser.open(url)
+    print("Microsoft Edge not found: opened the default browser. Close this program to stop the server.", flush=True)
+    while True:  # pragma: no cover - only on PCs without Edge
+        time.sleep(3600)
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="LocalAudioStudio")
+    ap.add_argument("--server-only", action="store_true", help="run without opening a window")
+    ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", DEFAULT_PORT)))
+    args = ap.parse_args(argv)
+    url = f"http://127.0.0.1:{args.port}"
+
+    if port_in_use(args.port):
+        if is_our_app(url) and not args.server_only:
+            open_window(url, data_dir() / "window-profile")  # already running: just show it
+            return 0
+        print(f"Port {args.port} is used by another program. Try: LocalAudioStudio.exe --port {args.port + 1}",
+              file=sys.stderr)
+        return 2
+
+    redirect_output(data_dir() / "logs")
+    print("Bundled resources:", configure_environment(bundle_dir()), flush=True)
+
+    import server  # imported after the environment is configured
+    srv = server.create_server(args.port)
+    t = threading.Thread(target=srv.run, daemon=True, name="web-server")
+    t.start()
+    if not wait_until_ready(url):
+        print("Server did not start within 120 s; see the log above.", flush=True)
+        return 1
+    print(f"Ready at {url}", flush=True)
+    try:
+        if args.server_only:
+            while t.is_alive():
+                t.join(1)
+        else:
+            open_window(url, data_dir() / "window-profile")
+    finally:
+        srv.should_exit = True
+        server.shutdown()
+        t.join(10)
+        print("Stopped.", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    multiprocessing.freeze_support()  # required: the AI worker is a spawned child of the frozen .exe
+    sys.exit(main())

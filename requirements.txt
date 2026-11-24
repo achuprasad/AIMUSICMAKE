@@ -1,0 +1,18 @@
+# Runtime dependencies (versions verified by the quality gate on 2026-11-23).
+# PyTorch comes from the PyTorch index; pick the build for your GPU driver:
+#   CUDA 11.8 (works with old drivers, e.g. 457.x):  --extra-index-url https://download.pytorch.org/whl/cu118
+#   CPU only (CI, no NVIDIA GPU):                     --extra-index-url https://download.pytorch.org/whl/cpu
+# scripts/setup.ps1 chooses automatically. Full transitive pins: requirements-lock.txt
+torch==2.5.1
+torchaudio==2.5.1
+demucs==4.0.1
+audio-separator==0.48.0
+onnxruntime==1.32.0
+audioread==3.1.0
+librosa==1.0.1
+soundfile==0.14.0
+numpy==2.5.5
+fastapi==0.165.0
+uvicorn==0.54.0
+python-multipart==0.0.34
+setuptools>=84.1.0

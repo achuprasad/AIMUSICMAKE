@@ -1,0 +1,801 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Audio Studio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d5efc'/%3E%3Cpath d='M8 20v-8M12 24V8M16 18v-4M20 22V10M24 19v-6' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0a0c11;--surface:#11141b;--surface-2:#161a23;--surface-3:#1c2130;--border:#222838;--border-2:#2c3346;
+  --text:#e7eaf0;--muted:#8b93a7;--faint:#5d6578;--accent:#6d5efc;--accent-2:#4f8cff;--accent-soft:rgba(109,94,252,.14);
+  --ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--radius:14px;--shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+
+/* ---------- sidebar ---------- */
+.side{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;box-shadow:0 6px 18px -6px rgba(109,94,252,.7)}
+.brand b{display:block;font-size:15px;letter-spacing:-.01em}
+.brand small{color:var(--muted);font-size:11.5px}
+.nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 10px 6px}
+.nav button{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border:0;background:none;border-radius:9px;color:var(--muted);text-align:left;font-weight:500;transition:.15s}
+.nav button:hover{background:var(--surface-2);color:var(--text)}
+.nav button.active{background:var(--accent-soft);color:#fff}
+.nav button.active svg{color:#a99fff}
+.nav svg{width:18px;height:18px;flex:none}
+.side-foot{margin-top:auto;display:grid;gap:10px}
+.device{border:1px solid var(--border);border-radius:11px;padding:11px 12px;background:var(--surface-2)}
+.device .row{display:flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
+.device small{color:var(--muted);font-size:11.5px;display:block;margin-top:3px}
+
+/* ---------- main ---------- */
+main{padding:30px 40px 60px;max-width:1180px;width:100%}
+.page{display:none;animation:fade .25s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:22px}
+.head h1{margin:0;font-size:24px;letter-spacing:-.02em;font-weight:650}
+.head p{margin:4px 0 0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.card h3{margin:0 0 14px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stack{display:grid;gap:18px}
+
+/* ---------- dropzone ---------- */
+.drop{border:1.5px dashed var(--border-2);border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:.2s;background:linear-gradient(180deg,rgba(109,94,252,.03),transparent)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .ic{width:46px;height:46px;border-radius:12px;background:var(--surface-3);display:grid;place-items:center;margin:0 auto 12px;color:#a99fff}
+.drop b{display:block;font-size:15px}
+.drop span{color:var(--muted);font-size:13px}
+.file{display:none;align-items:center;gap:14px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
+.file.show{display:flex}
+.file .ic{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;flex:none}
+.file .meta{flex:1;min-width:0}
+.file .meta b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file .meta span{color:var(--muted);font-size:12.5px}
+.file .upbar{height:3px;background:var(--surface-3);border-radius:3px;margin-top:7px;overflow:hidden}
+.file .upbar i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+.iconbtn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;color:var(--muted);flex:none}
+.iconbtn:hover{color:var(--text);border-color:var(--border-2)}
+.file-actions{display:flex;gap:6px;flex:none}
+.btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px;gap:5px}
+.btn.sm svg{width:14px;height:14px}
+.btn.danger:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);color:#fca5a5}
+.preview{margin-top:14px;display:none}
+.preview.show{display:block}
+
+/* ---------- options ---------- */
+.field{margin-bottom:18px}
+.field:last-child{margin-bottom:0}
+.field label.l{display:flex;justify-content:space-between;font-weight:600;font-size:13px;margin-bottom:8px}
+.field label.l em{font-style:normal;color:var(--muted);font-weight:500;font-family:var(--mono);font-size:12.5px}
+.options{display:grid;gap:8px}
+.opt{display:flex;gap:12px;align-items:flex-start;padding:12px 13px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);cursor:pointer;transition:.15s;text-align:left;width:100%}
+.opt:hover{border-color:var(--border-2)}
+.opt.sel{border-color:var(--accent);background:var(--accent-soft)}
+.opt .radio{width:16px;height:16px;border-radius:50%;border:2px solid var(--border-2);margin-top:2px;flex:none;transition:.15s}
+.opt.sel .radio{border:5px solid var(--accent);background:#fff}
+.opt b{display:block;font-size:13.5px}
+.opt span{color:var(--muted);font-size:12.5px}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px;background:rgba(34,197,94,.14);color:#4ade80}
+.tag.b{background:rgba(79,140,255,.15);color:#7fb0ff}
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
+.seg button{flex:1;border:0;background:none;padding:7px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;transition:.15s}
+.seg button:hover{color:var(--text)}
+.seg button.sel{background:var(--surface-3);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.hint{color:var(--muted);font-size:12.5px;margin-top:7px}
+select,input[type=number]{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 11px;outline:none}
+select:focus,input:focus{border-color:var(--accent)}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.switch{display:flex;align-items:center;gap:10px;font-weight:600;font-size:13px;cursor:pointer}
+.switch input{width:18px;height:18px;accent-color:var(--accent);margin:0}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-2);background:var(--surface-2);border-radius:10px;padding:9px 15px;font-weight:600;font-size:13.5px;transition:.15s;white-space:nowrap}
+.btn:hover{background:var(--surface-3)}
+.btn.primary{width:100%;padding:13px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:14.5px;box-shadow:0 8px 24px -10px rgba(109,94,252,.8)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn svg{width:16px;height:16px}
+
+/* ---------- progress ---------- */
+.progress{display:none;margin-top:18px}
+.progress.show{display:block}
+.pg-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px}
+.pg-pct{font-size:34px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.pg-pct small{font-size:16px;color:var(--muted);font-weight:600}
+.pg-stage{color:var(--text);font-weight:500;text-align:right}
+.bar{height:10px;border-radius:10px;background:var(--surface-3);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;width:0;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .4s ease}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shine 1.6s infinite;transform:translateX(-100%)}
+.progress.done .bar i{background:var(--ok)}
+.progress.done .bar i::after,.progress.err .bar i::after{display:none}
+.progress.err .bar i{background:var(--err)}
+@keyframes shine{to{transform:translateX(100%)}}
+.pg-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:12.5px;margin-top:9px;font-variant-numeric:tabular-nums}
+.steps{display:flex;gap:6px;margin-top:16px}
+.step{flex:1;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--faint);padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border)}
+.step i{width:8px;height:8px;border-radius:50%;background:var(--border-2);flex:none}
+.step.on{color:var(--text);border-color:rgba(109,94,252,.5)}
+.step.on i{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);animation:pulse 1.2s infinite}
+.step.ok{color:var(--muted)}
+.step.ok i{background:var(--ok)}
+@keyframes pulse{50%{opacity:.4}}
+.alert{display:none;margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#fca5a5;font-size:13px}
+.alert.show{display:block}
+
+/* ---------- results ---------- */
+.results{display:none;margin-top:18px}
+.results.show{display:block}
+.res-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.res-head h2{margin:0;font-size:17px}
+.res-head .sub{color:var(--muted);font-size:12.5px}
+.res-actions{display:flex;gap:8px;flex-wrap:wrap}
+.transport{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);margin-bottom:10px}
+.play{width:42px;height:42px;border-radius:50%;border:0;background:#fff;color:#000;display:grid;place-items:center;flex:none;transition:.15s}
+.play:hover{transform:scale(1.05)}
+.play svg{width:18px;height:18px}
+.time{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:96px}
+.seek{flex:1}
+.stem{display:grid;grid-template-columns:150px 1fr auto;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:8px;transition:opacity .2s}
+.stem.muted{opacity:.45}
+.stem .name{display:flex;align-items:center;gap:10px;min-width:0}
+.stem .sw{width:10px;height:30px;border-radius:4px;flex:none}
+.stem .name b{display:block;font-size:13.5px}
+.stem .name span{font-size:11.5px;color:var(--muted)}
+.stem canvas{width:100%;height:48px;display:block;cursor:pointer}
+.stem .ctl{display:flex;align-items:center;gap:6px}
+.ms{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);font-size:11.5px;font-weight:700;color:var(--muted)}
+.ms.on.m{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5);color:#fca5a5}
+.ms.on.s{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);color:#fcd34d}
+.vol{width:92px}
+.single{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+.single canvas{width:100%;height:56px;cursor:pointer}
+
+/* ---------- misc ---------- */
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.kv div{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:16px}
+.kv small{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.06em}
+.kv b{display:block;font-size:26px;letter-spacing:-.02em;margin-top:4px}
+.kv span{color:var(--muted);font-size:12px}
+.flist{display:grid;gap:8px;margin-top:12px}
+.fitem{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--surface-2)}
+.fitem .n{width:24px;height:24px;border-radius:7px;background:var(--surface-3);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--muted)}
+.fitem .meta{flex:1;min-width:0}
+.fitem .meta b{display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fitem .meta span{font-size:11.5px;color:var(--muted)}
+.region{position:relative}
+.region canvas{width:100%;height:90px;display:block;cursor:crosshair;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
+.empty{color:var(--faint);text-align:center;padding:26px 10px;font-size:13px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--surface-3);border:1px solid var(--border-2);padding:11px 16px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(120%);opacity:0;transition:.25s;z-index:9;font-weight:500}
+.toast.show{transform:none;opacity:1}
+@media (max-width:980px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.grid{grid-template-columns:1fr}main{padding:20px}.kv{grid-template-columns:1fr 1fr}.stem{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><svg width="20" height="20" viewBox="0 0 32 32"><path d="M6 20v-8M11 25V7M16 19v-6M21 23V9M26 19v-6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg></div>
+      <div><b>Local Audio Studio</b><small>AI stem separation · offline</small></div>
+    </div>
+    <div class="nav-label">Separation</div>
+    <nav class="nav" id="nav">
+      <button data-page="split" class="active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/><path d="M19 11a7 7 0 0 1-14 0M12 18v3"/></svg>Vocal Remover</button>
+    </nav>
+    <div class="nav-label">Tools</div>
+    <nav class="nav" id="nav2">
+      <button data-page="pitch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>Pitch &amp; Tempo</button>
+      <button data-page="analyze"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Key &amp; BPM Finder</button>
+      <button data-page="cut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></svg>Cutter</button>
+      <button data-page="join"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="7" height="10" rx="2"/><rect x="14" y="7" width="7" height="10" rx="2"/><path d="M10 12h4"/></svg>Joiner</button>
+      <button data-page="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/></svg>Converter</button>
+    </nav>
+    <div class="side-foot">
+      <div class="device"><div class="row"><span class="dot" id="devdot"></span><span id="devname">Detecting…</span></div><small id="devsub">Processing engine</small></div>
+      <button class="btn" onclick="openFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Output folder</button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ================= SPLIT ================= -->
+    <section class="page active" id="page-split">
+      <div class="head"><div><h1>Vocal Remover &amp; Stem Splitter</h1><p>Separate vocals, instrumental, drums, bass and more with state-of-the-art AI models.</p></div></div>
+      <div class="grid">
+        <div class="stack">
+          <div class="card"><h3>Source</h3><div data-drop="split"></div></div>
+        </div>
+        <div class="card">
+          <h3>Settings</h3>
+          <div class="field">
+            <label class="l">AI model</label>
+            <div class="options" id="engine">
+              <button class="opt sel" data-v="bs_roformer"><i class="radio"></i><div><b>BS-RoFormer<span class="tag">Best quality</span></b><span>Cleanest vocal / instrumental split</span></div></button>
+              <button class="opt" data-v="mel_roformer"><i class="radio"></i><div><b>Mel-Band RoFormer</b><span>Natural-sounding vocals, fewer artefacts</span></div></button>
+              <button class="opt" data-v="demucs"><i class="radio"></i><div><b>Demucs<span class="tag b">Multi-stem</span></b><span>Drums, bass, guitar, piano &amp; more</span></div></button>
+            </div>
+          </div>
+          <div class="field" id="stemsField" style="display:none">
+            <label class="l">Stems</label>
+            <div class="seg" id="stems"><button data-v="2">2 · Vocals / Music</button><button class="sel" data-v="4">4 stems</button><button data-v="6">6 stems</button></div>
+          </div>
+          <div class="field">
+            <label class="l">Speed <em id="estimate"></em></label>
+            <div class="seg" id="speed"><button class="sel" data-v="fast">Fast</button><button data-v="balanced">Balanced</button><button data-v="best">Max</button></div>
+            <div class="hint" id="speedHint"></div>
+          </div>
+          <div class="field">
+            <label class="l" for="splitFmt">Output format</label>
+            <select id="splitFmt"><option>wav</option><option>mp3</option><option>flac</option><option>ogg</option><option>m4a</option></select>
+          </div>
+          <button class="btn primary" id="splitGo" disabled>Extract stems</button>
+        </div>
+      </div>
+      <div class="card progress" id="splitProg"></div>
+      <div class="results" id="splitRes"></div>
+    </section>
+
+    <!-- ================= PITCH ================= -->
+    <section class="page" id="page-pitch">
+      <div class="head"><div><h1>Pitch &amp; Tempo Changer</h1><p>Change the speed, the key, or both.</p></div></div>
+      <div class="grid">
+        <div class="card"><h3>Source</h3><div data-drop="pitch"></div></div>
+        <div class="card"><h3>Settings</h3>
+          <div class="field"><label class="l" for="tp">Speed <em id="tpVal">1.00×</em></label><input type="range" id="tp" min="50" max="200" step="1" value="100">
+            <div class="seg" id="tpPresets" style="margin-top:8px"><button data-v="75">0.75×</button><button class="sel" data-v="100">1×</button><button data-v="125">1.25×</button><button data-v="150">1.5×</button></div></div>
+          <div class="field"><label class="switch"><input type="checkbox" id="keepPitch" checked><span>Keep original pitch</span></label><div class="hint" id="kpHint"></div></div>
+          <div class="field"><label class="l" for="st">Pitch <em id="stVal">0 semitones</em></label><input type="range" id="st" min="-12" max="12" step="0.5" value="0"></div>
+          <div class="field"><label class="l" for="pitchFmt">Output format</label><select id="pitchFmt"><option>wav</option><option selected>mp3</option><option>flac</option><option>ogg</option><option>m4a</option></select></div>
+          <button class="btn primary" id="pitchGo" disabled>Apply changes</button>
+        </div>
+      </div>
+      <div class="card progress" id="pitchProg"></div><div class="results" id="pitchRes"></div>
+    </section>
+
+    <!-- ================= ANALYZE ================= -->
+    <section class="page" id="page-analyze">
+      <div class="head"><div><h1>Key &amp; BPM Finder</h1><p>Detect the musical key, Camelot code and tempo of any track.</p></div></div>
+      <div class="grid">
+        <div class="card"><h3>Source</h3><div data-drop="analyze"></div></div>
+        <div class="card"><h3>Analyze</h3><p class="hint" style="margin:0 0 16px">Works best on full songs with a steady beat. Takes a few seconds.</p><button class="btn primary" id="analyzeGo" disabled>Analyze track</button></div>
+      </div>
+      <div class="card progress" id="analyzeProg"></div><div class="results" id="analyzeRes"></div>
+    </section>
+
+    <!-- ================= CUT ================= -->
+    <section class="page" id="page-cut">
+      <div class="head"><div><h1>Audio Cutter</h1><p>Trim a section and add smooth fades. Drag on the waveform to select.</p></div></div>
+      <div class="grid">
+        <div class="stack"><div class="card"><h3>Source</h3><div data-drop="cut"></div>
+          <div class="region" id="cutRegion" style="margin-top:14px;display:none"><canvas id="cutCanvas"></canvas></div></div></div>
+        <div class="card"><h3>Settings</h3>
+          <div class="row2 field"><div><label class="l" for="cutS">Start (s)</label><input type="number" id="cutS" min="0" step="0.1" value="0"></div><div><label class="l" for="cutE">End (s)</label><input type="number" id="cutE" min="0" step="0.1" value="0"></div></div>
+          <div class="field"><label class="l" for="fi">Fade in <em id="fiVal">0 s</em></label><input type="range" id="fi" min="0" max="10" step="0.5" value="0"></div>
+          <div class="field"><label class="l" for="fo">Fade out <em id="foVal">0 s</em></label><input type="range" id="fo" min="0" max="10" step="0.5" value="0"></div>
+          <div class="field"><label class="l" for="cutFmt">Output format</label><select id="cutFmt"><option>wav</option><option selected>mp3</option><option>flac</option><option>ogg</option><option>m4a</option></select></div>
+          <button class="btn primary" id="cutGo" disabled>Cut audio</button>
+        </div>
+      </div>
+      <div class="card progress" id="cutProg"></div><div class="results" id="cutRes"></div>
+    </section>
+
+    <!-- ================= JOIN ================= -->
+    <section class="page" id="page-join">
+      <div class="head"><div><h1>Audio Joiner</h1><p>Combine multiple tracks into one, with optional crossfades.</p></div></div>
+      <div class="grid">
+        <div class="card"><h3>Tracks</h3><div data-drop="join" data-multiple="1"></div><div class="flist" id="joinList"></div></div>
+        <div class="card"><h3>Settings</h3>
+          <div class="field"><label class="l" for="cf">Crossfade <em id="cfVal">0 s</em></label><input type="range" id="cf" min="0" max="10" step="0.5" value="0"></div>
+          <div class="field"><label class="l" for="joinFmt">Output format</label><select id="joinFmt"><option>wav</option><option selected>mp3</option><option>flac</option><option>ogg</option><option>m4a</option></select></div>
+          <button class="btn primary" id="joinGo" disabled>Join tracks</button>
+        </div>
+      </div>
+      <div class="card progress" id="joinProg"></div><div class="results" id="joinRes"></div>
+    </section>
+
+    <!-- ================= CONVERT ================= -->
+    <section class="page" id="page-convert">
+      <div class="head"><div><h1>Audio Converter</h1><p>Convert any audio or video file to WAV, MP3, FLAC, OGG or M4A.</p></div></div>
+      <div class="grid">
+        <div class="card"><h3>Source</h3><div data-drop="convert"></div></div>
+        <div class="card"><h3>Settings</h3>
+          <div class="field"><label class="l">Convert to</label><div class="seg" id="convFmt"><button data-v="wav">WAV</button><button class="sel" data-v="mp3">MP3</button><button data-v="flac">FLAC</button><button data-v="ogg">OGG</button><button data-v="m4a">M4A</button></div></div>
+          <button class="btn primary" id="convertGo" disabled>Convert</button>
+        </div>
+      </div>
+      <div class="card progress" id="convertProg"></div><div class="results" id="convertRes"></div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const STEM_COLORS = {vocals:"#f472b6",instrumental:"#60a5fa",drums:"#f59e0b",bass:"#34d399",guitar:"#f87171",piano:"#a78bfa",other:"#94a3b8",result:"#8b7dff",custom_mix:"#8b7dff"};
+const ICON = {
+  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>',
+  pause:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>',
+  dl:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v12m0 0 5-5m-5 5-5-5M4 21h16"/></svg>',
+  x:'<svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  up:'<svg viewBox="0 0 24 24" width="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 16V4m0 0-5 5m5-5 5 5M4 20h16"/></svg>',
+  note:'<svg viewBox="0 0 24 24" width="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
+  folder:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>',
+};
+const fmtT = s => { s = Math.max(0, s || 0); const m = Math.floor(s / 60); return `${m}:${String(Math.floor(s % 60)).padStart(2, "0")}`; };
+const fmtDur = s => s == null ? "—" : s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}m ${String(Math.round(s % 60)).padStart(2, "0")}s`;
+const fmtSize = b => b > 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.round(b / 1e3) + " KB";
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2600); }
+async function api(url, body) {
+  const r = await fetch(url, body ? {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body)} : {});
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
+  return r.json();
+}
+let INFO = {};
+api("/api/info").then(i => { INFO = i; $("#devname").textContent = i.device === "cuda" ? i.gpu : "CPU mode"; $("#devsub").textContent = i.device === "cuda" ? "GPU acceleration on" : "No GPU found — slower";
+  if (i.device !== "cuda") $("#devdot").style.background = "var(--warn)"; });
+function openFolder(path) { api("/api/open-folder", {path}).catch(e => toast(e.message)); }
+
+/* ---------- navigation ---------- */
+$$(".nav button").forEach(b => b.onclick = () => {
+  $$(".nav button").forEach(x => x.classList.toggle("active", x === b));
+  $$(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + b.dataset.page));
+  stopAll();
+});
+
+/* ---------- segmented / option pickers ---------- */
+function picker(el, onChange) {
+  const btns = $$("button", el);
+  btns.forEach(b => b.onclick = () => { btns.forEach(x => x.classList.toggle("sel", x === b)); onChange && onChange(b.dataset.v); });
+  return () => $("button.sel", el).dataset.v;
+}
+
+/* ---------- waveform drawing ---------- */
+function drawWave(canvas, peaks, color, progress = 0, region = null) {
+  const dpr = devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
+  const c = canvas.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
+  if (region) { c.fillStyle = "rgba(109,94,252,.18)"; c.fillRect(region[0] * w, 0, (region[1] - region[0]) * w, h);
+    c.fillStyle = "#8b7dff"; c.fillRect(region[0] * w - 1, 0, 2, h); c.fillRect(region[1] * w - 1, 0, 2, h); }
+  const n = peaks.length, bw = w / n, mid = h / 2;
+  for (let i = 0; i < n; i++) {
+    const x = i * bw, v = Math.max(1, peaks[i] * (h / 2 - 2));
+    const played = i / n < progress, inReg = !region || (i / n >= region[0] && i / n <= region[1]);
+    c.fillStyle = played ? color : inReg ? color + (region ? "cc" : "55") : "#3a4155";
+    c.fillRect(x, mid - v, Math.max(1, bw - .6), v * 2);
+  }
+  if (progress > 0 && progress < 1) { c.fillStyle = "#fff"; c.fillRect(progress * w - 1, 0, 2, h); }
+}
+async function peaksFromFile(file, n = 600) {
+  const ctx = new OfflineAudioContext(1, 1, 44100);
+  const buf = await ctx.decodeAudioData(await file.arrayBuffer());
+  const d = buf.getChannelData(0), step = Math.floor(d.length / n) || 1, out = [];
+  let max = 0;
+  for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step && j < d.length; j += 4) m = Math.max(m, Math.abs(d[j])); out.push(m); max = Math.max(max, m); }
+  return {peaks: out.map(v => v / (max || 1)), duration: buf.duration};
+}
+
+/* ---------- upload / dropzone ---------- */
+const SOURCES = {};
+function upload(file, onProg) {
+  return new Promise((res, rej) => {
+    const x = new XMLHttpRequest(), fd = new FormData(); fd.append("file", file);
+    x.open("POST", "/api/upload");
+    x.upload.onprogress = e => e.lengthComputable && onProg(e.loaded / e.total);
+    x.onload = () => { let j = {}; try { j = JSON.parse(x.responseText); } catch {} x.status === 200 ? res(j) : rej(new Error(j.detail || "Upload failed")); };
+    x.onerror = () => rej(new Error("Upload failed")); x.send(fd);
+  });
+}
+$$("[data-drop]").forEach(host => {
+  const key = host.dataset.drop, multiple = !!host.dataset.multiple;
+  host.innerHTML = `<div class="drop" role="button" tabindex="0" aria-label="Choose an audio file"><div class="ic">${ICON.up}</div><b>Drop ${multiple ? "audio files" : "an audio file"} here</b><span>or click to browse · MP3, WAV, FLAC, M4A, OGG, MP4…</span>
+    <input type="file" accept="audio/*,video/*" ${multiple ? "multiple" : ""} hidden></div>
+    <div class="file"><div class="ic">${ICON.note}</div><div class="meta"><b></b><span></span><div class="upbar"><i></i></div></div><div class="file-actions"><button class="btn sm" data-replace aria-label="Replace with another file">Replace</button><button class="btn sm danger" data-remove aria-label="Remove file">${ICON.x}Remove</button></div></div>
+    <div class="preview"></div>`;
+  const drop = $(".drop", host), input = $("input", host), fileEl = $(".file", host);
+  drop.onclick = () => input.click();
+  drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } };
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = () => drop.classList.remove("over");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); handle([...e.dataTransfer.files]); };
+  input.onchange = () => { handle([...input.files]); input.value = ""; };
+  $("[data-replace]", fileEl).onclick = () => input.click();
+  $("[data-remove]", fileEl).onclick = () => { dropSourcePlayer(key); if (SOURCES[key]) fetch("/api/uploads/" + SOURCES[key].id, {method: "DELETE"}); SOURCES[key] = null; fileEl.classList.remove("show"); drop.style.display = ""; $(".preview", host).classList.remove("show"); onSource(key); };
+  async function handle(files) {
+    if (!files.length) return;
+    if (multiple) return files.forEach(f => addJoin(f));
+    const f = files[0];
+    dropSourcePlayer(key);
+    if (SOURCES[key]) fetch("/api/uploads/" + SOURCES[key].id, {method: "DELETE"});
+    drop.style.display = "none"; fileEl.classList.add("show");
+    $(".meta b", fileEl).textContent = f.name; $(".meta span", fileEl).textContent = `${fmtSize(f.size)} · uploading…`;
+    $(".upbar", fileEl).style.display = ""; SOURCES[key] = null; onSource(key);
+    try {
+      const u = await upload(f, p => $(".upbar i", fileEl).style.width = (p * 100) + "%");
+      SOURCES[key] = {...u, file: f};
+      $(".meta span", fileEl).textContent = `${fmtSize(u.size)} · ${fmtT(u.duration)}`;
+      $(".upbar", fileEl).style.display = "none";
+      onSource(key, f);
+    } catch (e) { $(".meta span", fileEl).textContent = e.message; $(".meta span", fileEl).style.color = "#fca5a5"; }
+  }
+});
+
+/* ---------- job runner with live progress ---------- */
+const STEPS = {separate: ["Upload", "Load model", "Extract", "Save"], default: ["Upload", "Process", "Save"]};
+async function runJob(tool, params, progEl, btn) {
+  const steps = STEPS[tool] || STEPS.default;
+  progEl.className = "card progress show";
+  progEl.innerHTML = `<div class="pg-top"><div class="pg-pct">0<small>%</small></div><div class="pg-stage">Queued…</div></div>
+    <div class="bar"><i></i></div><div class="pg-meta"><span class="el">Elapsed 0s</span><span class="eta">Estimating time…</span></div>
+    <div class="steps">${steps.map(s => `<div class="step"><i></i>${s}</div>`).join("")}</div><div class="alert"></div>`;
+  btn.disabled = true;
+  const setStep = idx => $$(".step", progEl).forEach((s, i) => { s.classList.toggle("ok", i < idx); s.classList.toggle("on", i === idx); });
+  setStep(1);
+  try {
+    const {id} = await api("/api/jobs", {tool, params});
+    while (true) {
+      await new Promise(r => setTimeout(r, 450));
+      const j = await api("/api/jobs/" + id);
+      const pct = Math.floor((j.progress || 0) * 100);
+      $(".pg-pct", progEl).innerHTML = `${pct}<small>%</small>`;
+      $(".bar i", progEl).style.width = (j.progress * 100) + "%";
+      $(".pg-stage", progEl).textContent = j.stage || "";
+      $(".el", progEl).textContent = "Elapsed " + fmtDur(j.elapsed_now);
+      $(".eta", progEl).textContent = j.status === "queued" ? "Waiting in queue" : j.eta != null ? `About ${fmtDur(j.eta)} left` : "Estimating time…";
+      const p = j.progress;
+      setStep(steps.length === 4 ? (p < .10 ? 1 : p < .92 ? 2 : 3) : (p < .9 ? 1 : 2));
+      if (j.status === "done") {
+        progEl.classList.add("done"); setStep(steps.length);
+        $(".pg-stage", progEl).textContent = "Completed"; $(".eta", progEl).textContent = `Finished in ${fmtDur(j.elapsed)}`;
+        $(".pg-pct", progEl).innerHTML = `100<small>%</small>`;
+        btn.disabled = false; return j.result;
+      }
+      if (j.status === "error") throw new Error(j.error);
+    }
+  } catch (e) {
+    progEl.classList.add("err"); $(".pg-stage", progEl).textContent = "Failed";
+    const a = $(".alert", progEl); a.textContent = e.message; a.classList.add("show");
+    btn.disabled = false; throw e;
+  }
+}
+
+/* ---------- single-file result player ---------- */
+const players = new Set();
+function stopAll() { players.forEach(p => p.pause && p.pause()); if (MIX) MIX.stop(); }
+function singleResult(host, res, title) {
+  const f = res.files[0];
+  host.className = "results show";
+  host.innerHTML = `<div class="res-head"><div><h2>${title}</h2><div class="sub">${f.name} · ${fmtSize(f.size)}</div></div>
+    <div class="res-actions"><button class="btn" data-open>${ICON.folder}Open folder</button><a class="btn" href="${f.url}" download>${ICON.dl}Download</a></div></div>
+    <div class="single"><button class="play" aria-label="Play / pause">${ICON.play}</button><canvas></canvas><span class="time">0:00 / 0:00</span></div>`;
+  $("[data-open]", host).onclick = () => openFolder(res.folder);
+  const audio = new Audio(f.url), cv = $("canvas", host), btn = $(".play", host), color = STEM_COLORS[f.key] || "#8b7dff";
+  players.add(audio);
+  const draw = () => { drawWave(cv, f.peaks, color, audio.duration ? audio.currentTime / audio.duration : 0); $(".time", host).textContent = `${fmtT(audio.currentTime)} / ${fmtT(audio.duration)}`; };
+  btn.onclick = () => { if (audio.paused) { stopAll(); audio.play(); } else audio.pause(); };
+  audio.onplay = () => btn.innerHTML = ICON.pause; audio.onpause = audio.onended = () => btn.innerHTML = ICON.play;
+  audio.ontimeupdate = audio.onloadedmetadata = draw;
+  cv.onclick = e => { if (audio.duration) { audio.currentTime = e.offsetX / cv.clientWidth * audio.duration; draw(); } };
+  requestAnimationFrame(draw); addEventListener("resize", draw);
+}
+
+/* ---------- stem mixer (synced Web Audio playback) ---------- */
+let MIX = null;
+class Mixer {
+  constructor(host, res, fmt) {
+    this.res = res; this.fmt = fmt; this.ctx = null; this.stems = res.files.map(f => ({...f, vol: 100, mute: false, solo: false}));
+    this.playing = false; this.offset = 0; this.duration = 0; this.host = host; this.render();
+  }
+  render() {
+    const h = this.host, r = this.res;
+    h.className = "results show";
+    h.innerHTML = `<div class="res-head"><div><h2>Your stems are ready</h2><div class="sub">${r.files.length} stems · saved to ${r.folder}</div></div>
+      <div class="res-actions"><button class="btn" data-open>${ICON.folder}Open folder</button><button class="btn" data-export>${ICON.dl}Export mix</button></div></div>
+      <div class="transport"><button class="play" data-play aria-label="Play all stems / pause">${ICON.play}</button><span class="time">0:00 / 0:00</span>
+      <input type="range" class="seek" min="0" max="1000" value="0" aria-label="Playback position"><span class="hint" style="margin:0" data-status>Play all stems together · use M / S to mute or solo</span></div>
+      ${this.stems.map((s, i) => `<div class="stem" data-i="${i}"><div class="name"><span class="sw" style="background:${STEM_COLORS[s.key] || "#94a3b8"}"></span>
+        <div><b>${s.label}</b><span>${fmtSize(s.size)}</span></div></div><canvas></canvas>
+        <div class="ctl"><button class="ms m" title="Mute" aria-label="Mute ${s.label}" aria-pressed="false">M</button><button class="ms s" title="Solo" aria-label="Solo ${s.label}" aria-pressed="false">S</button>
+        <input type="range" class="vol" min="0" max="150" value="100" title="Volume" aria-label="${s.label} volume">
+        <a class="iconbtn" href="${s.url}" download title="Download ${s.label}">${ICON.dl}</a></div></div>`).join("")}`;
+    $("[data-open]", h).onclick = () => openFolder(r.folder);
+    $("[data-play]", h).onclick = () => this.toggle();
+    $("[data-export]", h).onclick = e => this.export(e.currentTarget);
+    $(".seek", h).oninput = e => this.seek(e.target.value / 1000);
+    $$(".stem", h).forEach(row => {
+      const s = this.stems[row.dataset.i]; s.row = row; s.cv = $("canvas", row);
+      $(".m", row).onclick = e => { s.mute = !s.mute; e.target.classList.toggle("on", s.mute); e.target.setAttribute("aria-pressed", s.mute); this.applyGains(); };
+      $(".s", row).onclick = e => { s.solo = !s.solo; e.target.classList.toggle("on", s.solo); e.target.setAttribute("aria-pressed", s.solo); this.applyGains(); };
+      $(".vol", row).oninput = e => { s.vol = +e.target.value; this.applyGains(); };
+      s.cv.onclick = e => this.duration && this.seek(e.offsetX / s.cv.clientWidth);
+    });
+    this.draw(); addEventListener("resize", () => this.draw());
+  }
+  async load() {
+    if (this.ctx) return;
+    this.ctx = new AudioContext(); $("[data-status]", this.host).textContent = "Loading stems…";
+    await Promise.all(this.stems.map(async s => {
+      s.buf = await this.ctx.decodeAudioData(await (await fetch(s.url)).arrayBuffer());
+      s.gain = this.ctx.createGain(); s.gain.connect(this.ctx.destination);
+    }));
+    this.duration = Math.max(...this.stems.map(s => s.buf.duration));
+    $("[data-status]", this.host).textContent = "Play all stems together · use M / S to mute or solo";
+    this.applyGains();
+  }
+  applyGains() {
+    const anySolo = this.stems.some(s => s.solo);
+    this.stems.forEach(s => {
+      const on = !s.mute && (!anySolo || s.solo);
+      s.row && s.row.classList.toggle("muted", !on);
+      if (s.gain) s.gain.gain.setTargetAtTime(on ? s.vol / 100 : 0, this.ctx.currentTime, .015);
+    });
+  }
+  now() { return this.playing ? this.offset + this.ctx.currentTime - this.t0 : this.offset; }
+  async toggle() { if (this.playing) return this.stop(); stopAll(); MIX = this; await this.load(); this.start(); }
+  start() {
+    if (this.offset >= this.duration) this.offset = 0;
+    this.t0 = this.ctx.currentTime + .05;
+    this.stems.forEach(s => { s.src = this.ctx.createBufferSource(); s.src.buffer = s.buf; s.src.connect(s.gain); s.src.start(this.t0, this.offset); });
+    this.playing = true; $("[data-play]", this.host).innerHTML = ICON.pause; this.tick();
+  }
+  stop() {
+    if (!this.playing) return;
+    this.offset = this.now(); this.stems.forEach(s => { try { s.src.stop(); } catch {} }); this.playing = false;
+    $("[data-play]", this.host).innerHTML = ICON.play; this.draw();
+  }
+  async seek(frac) { await this.load(); const was = this.playing; this.stop(); this.offset = frac * this.duration; if (was) this.start(); else this.draw(); }
+  tick() { if (!this.playing) return; if (this.now() >= this.duration) { this.stop(); this.offset = 0; this.draw(); return; } this.draw(); requestAnimationFrame(() => this.tick()); }
+  draw() {
+    const p = this.duration ? this.now() / this.duration : 0;
+    this.stems.forEach(s => s.cv && drawWave(s.cv, s.peaks, STEM_COLORS[s.key] || "#94a3b8", p));
+    $(".time", this.host).textContent = `${fmtT(this.now())} / ${fmtT(this.duration || (INFO.dur || 0))}`;
+    $(".seek", this.host).value = p * 1000;
+  }
+  async export(btn) {
+    const anySolo = this.stems.some(s => s.solo), files = {}, volumes = {};
+    this.stems.forEach(s => { files[s.key] = s.path; volumes[s.key] = (!s.mute && (!anySolo || s.solo)) ? s.vol : 0; });
+    btn.disabled = true; const old = btn.innerHTML; btn.textContent = "Exporting…";
+    try {
+      const j = await api("/api/jobs", {tool: "mix", params: {files, volumes, format: this.fmt === "wav" ? "wav" : this.fmt}});
+      let r; do { await new Promise(r => setTimeout(r, 400)); r = await api("/api/jobs/" + j.id); } while (r.status === "running" || r.status === "queued");
+      if (r.status === "error") throw new Error(r.error);
+      const a = document.createElement("a"); a.href = r.result.files[0].url; a.download = r.result.files[0].name; a.click();
+      toast("Mix exported and saved to the output folder");
+    } catch (e) { toast(e.message); }
+    btn.disabled = false; btn.innerHTML = old;
+  }
+}
+
+/* ---------- page: split ---------- */
+const getEngine = picker($("#engine"), v => { $("#stemsField").style.display = v === "demucs" ? "" : "none"; estimate(); });
+const getStems = picker($("#stems"), estimate);
+const getSpeed = picker($("#speed"), estimate);
+// seconds of processing per second of audio, measured on a GTX 1650
+const RATE = {roformer: {fast: .65, balanced: 1.3, best: 2.6}, demucs: {fast: .2, balanced: .25, best: .5}};
+const SPEED_HINT = {fast: "Recommended. Measured within 0.1 dB of Max quality, about 3× faster.", balanced: "Slightly more overlap between chunks. About 1.5× slower than Fast.", best: "Maximum overlap. About 3× slower than Fast for an inaudible gain."};
+function estimate() {
+  const s = SOURCES.split, sp = getSpeed(), fam = getEngine() === "demucs" ? "demucs" : "roformer";
+  $("#speedHint").textContent = SPEED_HINT[sp];
+  $("#estimate").textContent = s ? `≈ ${fmtDur(s.duration * RATE[fam][sp] * (INFO.device === "cuda" ? 1 : 6) + 8)}` : "";
+}
+estimate();
+function onSource(key, file) {
+  const ready = !!SOURCES[key];
+  const go = $("#" + key + "Go"); if (go) go.disabled = !ready;
+  if (key === "split") estimate();
+  if (key === "cut") setupCut(file);
+  if (ready && file && key !== "cut") previewSource(key, file);
+}
+/* ---------- source player: listen to the upload before processing ---------- */
+// Real-time pitch shifter for the live preview: two crossfaded, modulated delay taps
+// (sin² windows sum to 1, so loudness stays constant). Preview quality only; the
+// downloaded file is rendered on the server at full quality.
+const PITCH_WORKLET = `
+class PitchShift extends AudioWorkletProcessor {
+  static get parameterDescriptors() { return [{name: "ratio", defaultValue: 1, minValue: 0.25, maxValue: 4}]; }
+  constructor() { super(); this.W = 2048; this.N = 8192; this.buf = [new Float32Array(8192), new Float32Array(8192)]; this.w = 0; this.ph = 0; }
+  process(inputs, outputs, params) {
+    const inp = inputs[0], out = outputs[0], r = params.ratio[0];
+    if (!inp || !inp.length) return true;
+    const n = out[0].length, bypass = Math.abs(r - 1) < 1e-4;
+    for (let i = 0; i < n; i++) {
+      for (let c = 0; c < 2; c++) this.buf[c][this.w] = inp[Math.min(c, inp.length - 1)][i];
+      if (bypass) { for (let c = 0; c < out.length; c++) out[c][i] = inp[Math.min(c, inp.length - 1)][i]; }
+      else {
+        this.ph += (1 - r) / this.W; this.ph -= Math.floor(this.ph);
+        for (let c = 0; c < out.length; c++) {
+          const b = this.buf[Math.min(c, 1)]; let y = 0;
+          for (let k = 0; k < 2; k++) {
+            const p = (this.ph + k * 0.5) % 1; let pos = this.w - (p * this.W + 1); if (pos < 0) pos += this.N;
+            const i0 = Math.floor(pos), f = pos - i0, s = b[i0] * (1 - f) + b[(i0 + 1) % this.N] * f;
+            const g = Math.sin(Math.PI * p); y += s * g * g;
+          }
+          out[c][i] = y;
+        }
+      }
+      this.w = (this.w + 1) % this.N;
+    }
+    return true;
+  }
+}
+registerProcessor("pitch-shift", PitchShift);`;
+const SRC = {};  // key -> SourcePlayer (also used by tests)
+function dropSourcePlayer(key) {
+  const sp = SRC[key]; if (!sp) return;
+  sp.audio.pause(); players.delete(sp.audio); URL.revokeObjectURL(sp.audio.src); if (sp.ctx) sp.ctx.close();
+  delete SRC[key];
+}
+class SourcePlayer {
+  constructor(host, file, peaks, live) {
+    this.peaks = peaks; this.live = live; this.ctx = null; this.node = null;
+    this.audio = new Audio(URL.createObjectURL(file)); this.audio.preload = "auto"; players.add(this.audio);
+    host.innerHTML = `<div class="single src"><button class="play" aria-label="Play original / pause">${ICON.play}</button>
+      <canvas aria-label="Waveform, click to seek"></canvas><span class="time">0:00 / 0:00</span></div>
+      ${live ? '<div class="hint live-hint">▶ Live preview: speed and pitch changes are heard instantly (approximate). <b>Apply changes</b> renders the full-quality file.</div>' : ""}`;
+    this.cv = $("canvas", host); this.btn = $(".play", host); this.timeEl = $(".time", host);
+    this.btn.onclick = () => this.toggle();
+    this.cv.onclick = e => { if (this.audio.duration) { this.audio.currentTime = e.offsetX / this.cv.clientWidth * this.audio.duration; this.draw(); } };
+    const a = this.audio;
+    a.onplay = () => { this.btn.innerHTML = ICON.pause; this.tick(); };
+    a.onpause = a.onended = () => { this.btn.innerHTML = ICON.play; this.draw(); };
+    a.onloadedmetadata = () => this.draw();
+    addEventListener("resize", () => this.draw());
+    this.draw();
+  }
+  async ensureGraph() {
+    if (!this.live || this.ctx) return;
+    try {
+      this.ctx = new AudioContext();
+      const url = URL.createObjectURL(new Blob([PITCH_WORKLET], {type: "application/javascript"}));
+      await this.ctx.audioWorklet.addModule(url);
+      this.node = new AudioWorkletNode(this.ctx, "pitch-shift", {outputChannelCount: [2]});
+      this.ctx.createMediaElementSource(this.audio).connect(this.node).connect(this.ctx.destination);
+    } catch (e) { this.node = null; toast("Live pitch preview is not supported in this browser; speed preview still works."); }
+  }
+  apply({speed = 1, keepPitch = true, semitones = 0} = {}) {
+    const a = this.audio;
+    a.playbackRate = speed;
+    a.preservesPitch = a.mozPreservesPitch = a.webkitPreservesPitch = keepPitch;
+    if (this.node) this.node.parameters.get("ratio").setValueAtTime(Math.pow(2, semitones / 12), this.ctx.currentTime);
+    this.settings = {speed, keepPitch, semitones};
+  }
+  async toggle() {
+    if (!this.audio.paused) return this.audio.pause();
+    stopAll(); await this.ensureGraph(); if (this.ctx && this.ctx.state === "suspended") await this.ctx.resume();
+    this.apply(this.settings); await this.audio.play();
+  }
+  tick() { this.draw(); if (!this.audio.paused) requestAnimationFrame(() => this.tick()); }
+  draw() {
+    const a = this.audio;
+    drawWave(this.cv, this.peaks, "#8b7dff", a.duration ? a.currentTime / a.duration : 0);
+    this.timeEl.textContent = `${fmtT(a.currentTime)} / ${fmtT(a.duration)}`;
+  }
+}
+async function previewSource(key, file) {
+  const host = $(`[data-drop="${key}"] .preview`);
+  try {
+    const {peaks} = await peaksFromFile(file, 400);
+    if (!SOURCES[key]) return;  // file was removed while decoding
+    host.classList.add("show");
+    SRC[key] = new SourcePlayer(host, file, peaks, key === "pitch");
+    if (key === "pitch") livePitch();
+  } catch {}
+}
+function livePitch() {
+  if (SRC.pitch) SRC.pitch.apply({speed: +$("#tp").value / 100, keepPitch: $("#keepPitch").checked, semitones: +$("#st").value});
+}
+$("#splitGo").onclick = async () => {
+  stopAll(); $("#splitRes").className = "results";
+  const fmt = $("#splitFmt").value;
+  try {
+    const res = await runJob("separate", {upload: SOURCES.split.id, engine: getEngine(), stems: +getStems(), speed: getSpeed(), format: fmt}, $("#splitProg"), $("#splitGo"));
+    INFO.dur = SOURCES.split.duration; MIX = new Mixer($("#splitRes"), res, fmt);
+    $("#splitRes").scrollIntoView({behavior: "smooth", block: "start"});
+  } catch {}
+};
+
+/* ---------- page: pitch ---------- */
+$("#st").oninput = e => { $("#stVal").textContent = `${e.target.value > 0 ? "+" : ""}${e.target.value} semitones`; livePitch(); };
+function speedUI() {
+  const v = +$("#tp").value, keep = $("#keepPitch").checked, shift = 12 * Math.log2(v / 100);
+  $("#tpVal").textContent = (v / 100).toFixed(2) + "×";
+  $$("#tpPresets button").forEach(b => b.classList.toggle("sel", +b.dataset.v === v));
+  $("#kpHint").textContent = keep
+    ? "On: only the speed changes; the song stays in the same key."
+    : `Off: plays faster or slower like a tape, so the pitch moves too (${shift >= 0 ? "+" : ""}${shift.toFixed(1)} semitones at this speed).`;
+  livePitch();
+}
+$("#tp").oninput = speedUI;
+$("#keepPitch").onchange = speedUI;
+$$("#tpPresets button").forEach(b => b.onclick = () => { $("#tp").value = b.dataset.v; speedUI(); });
+speedUI();
+$("#pitchGo").onclick = async () => {
+  try { const r = await runJob("pitch", {upload: SOURCES.pitch.id, semitones: +$("#st").value, tempo: +$("#tp").value, keep_pitch: $("#keepPitch").checked, format: $("#pitchFmt").value}, $("#pitchProg"), $("#pitchGo"));
+    singleResult($("#pitchRes"), r, "Your track is ready"); } catch {}
+};
+
+/* ---------- page: analyze ---------- */
+$("#analyzeGo").onclick = async () => {
+  try {
+    const r = (await runJob("analyze", {upload: SOURCES.analyze.id}, $("#analyzeProg"), $("#analyzeGo"))).analysis;
+    const h = $("#analyzeRes"); h.className = "results show";
+    h.innerHTML = `<div class="kv"><div><small>Key</small><b>${r.key}</b><span>Alternative: ${r.alt_key}</span></div>
+      <div><small>Camelot</small><b>${r.camelot}</b><span>For harmonic mixing</span></div>
+      <div><small>Tempo</small><b>${r.bpm} <span style="font-size:14px">BPM</span></b><span>Half ${r.half} · Double ${r.double}</span></div>
+      <div><small>Duration</small><b>${fmtT(r.duration)}</b><span>Key confidence ${r.confidence}%</span></div></div>`;
+  } catch {}
+};
+
+/* ---------- page: cut ---------- */
+let CUT = null;
+async function setupCut(file) {
+  const wrap = $("#cutRegion");
+  if (!file) { wrap.style.display = "none"; CUT = null; return; }
+  // set defaults right away from the server-reported duration, then draw the waveform
+  // without overwriting anything the user typed while it was decoding
+  const dur = SOURCES.cut ? SOURCES.cut.duration : 0;
+  $("#cutS").value = 0; $("#cutE").value = dur.toFixed(1);
+  wrap.style.display = ""; const {peaks, duration} = await peaksFromFile(file, 600);
+  if (!SOURCES.cut) return;
+  CUT = {peaks, duration, a: Math.min(1, +$("#cutS").value / duration), b: Math.min(1, +$("#cutE").value / duration)};
+  drawCut();
+}
+function drawCut() { if (CUT) drawWave($("#cutCanvas"), CUT.peaks, "#8b7dff", 0, [CUT.a, CUT.b]); }
+(() => {
+  const cv = $("#cutCanvas"); let down = null;
+  cv.onmousedown = e => { if (!CUT) return; down = e.offsetX / cv.clientWidth; CUT.a = CUT.b = down; drawCut(); };
+  addEventListener("mousemove", e => { if (down == null || !CUT) return; const r = cv.getBoundingClientRect(), x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    CUT.a = Math.min(down, x); CUT.b = Math.max(down, x); $("#cutS").value = (CUT.a * CUT.duration).toFixed(1); $("#cutE").value = (CUT.b * CUT.duration).toFixed(1); drawCut(); });
+  addEventListener("mouseup", () => { if (down != null && CUT && CUT.b - CUT.a < .002) { CUT.a = 0; CUT.b = 1; $("#cutS").value = 0; $("#cutE").value = CUT.duration.toFixed(1); drawCut(); } down = null; });
+  const sync = () => { if (!CUT) return; CUT.a = Math.min(1, +$("#cutS").value / CUT.duration); CUT.b = Math.min(1, +$("#cutE").value / CUT.duration); drawCut(); };
+  $("#cutS").oninput = $("#cutE").oninput = sync; addEventListener("resize", drawCut);
+})();
+$("#fi").oninput = e => $("#fiVal").textContent = e.target.value + " s";
+$("#fo").oninput = e => $("#foVal").textContent = e.target.value + " s";
+$("#cutGo").onclick = async () => {
+  try { const r = await runJob("cut", {upload: SOURCES.cut.id, start: +$("#cutS").value, end: +$("#cutE").value, fade_in: +$("#fi").value, fade_out: +$("#fo").value, format: $("#cutFmt").value}, $("#cutProg"), $("#cutGo"));
+    singleResult($("#cutRes"), r, "Your clip is ready"); } catch {}
+};
+
+/* ---------- page: join ---------- */
+const JOIN = [];
+async function addJoin(f) {
+  const item = {name: f.name, size: f.size, id: null, err: null}; JOIN.push(item); renderJoin();
+  try { const u = await upload(f, () => {}); item.id = u.id; item.duration = u.duration; } catch (e) { item.err = e.message; }
+  renderJoin();
+}
+function renderJoin() {
+  const l = $("#joinList");
+  l.innerHTML = JOIN.length ? JOIN.map((it, i) => `<div class="fitem"><span class="n">${i + 1}</span><div class="meta"><b>${it.name}</b>
+    <span style="${it.err ? "color:#fca5a5" : ""}">${it.err || (it.id ? `${fmtSize(it.size)} · ${fmtT(it.duration)}` : "Uploading…")}</span></div>
+    <button class="iconbtn" data-up="${i}" title="Move up">↑</button><button class="iconbtn" data-dn="${i}" title="Move down">↓</button><button class="iconbtn" data-rm="${i}" title="Remove">${ICON.x}</button></div>`).join("")
+    : `<div class="empty">No tracks yet. Tracks are joined from top to bottom.</div>`;
+  $$("[data-up]", l).forEach(b => b.onclick = () => { const i = +b.dataset.up; if (i) { [JOIN[i - 1], JOIN[i]] = [JOIN[i], JOIN[i - 1]]; renderJoin(); } });
+  $$("[data-dn]", l).forEach(b => b.onclick = () => { const i = +b.dataset.dn; if (i < JOIN.length - 1) { [JOIN[i + 1], JOIN[i]] = [JOIN[i], JOIN[i + 1]]; renderJoin(); } });
+  $$("[data-rm]", l).forEach(b => b.onclick = () => { JOIN.splice(+b.dataset.rm, 1); renderJoin(); });
+  $("#joinGo").disabled = JOIN.filter(x => x.id).length < 2 || JOIN.some(x => !x.id && !x.err);
+}
+renderJoin();
+$("#cf").oninput = e => $("#cfVal").textContent = e.target.value + " s";
+$("#joinGo").onclick = async () => {
+  try { const r = await runJob("join", {uploads: JOIN.filter(x => x.id).map(x => x.id), crossfade: +$("#cf").value, format: $("#joinFmt").value}, $("#joinProg"), $("#joinGo"));
+    singleResult($("#joinRes"), r, "Your joined track is ready"); } catch {}
+};
+
+/* ---------- page: convert ---------- */
+const getConv = picker($("#convFmt"));
+$("#convertGo").onclick = async () => {
+  try { const r = await runJob("convert", {upload: SOURCES.convert.id, format: getConv()}, $("#convertProg"), $("#convertGo"));
+    singleResult($("#convertRes"), r, "Conversion complete"); } catch {}
+};
+</script>
+</body>
+</html>

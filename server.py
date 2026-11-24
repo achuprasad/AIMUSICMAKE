@@ -1,0 +1,262 @@
+"""Local Audio Studio - web server. Run: python server.py  ->  http://127.0.0.1:7860"""
+import os
+import shutil
+import sys
+import threading
+import time
+import traceback
+import uuid
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
+from urllib.parse import quote
+
+import uvicorn
+from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
+
+import engine
+from gpu_worker import GpuWorker, WorkerCrashed
+
+ROOT = Path(__file__).resolve().parent
+UPLOADS = Path(os.environ.get("AUDIO_STUDIO_UPLOADS", engine.HOME / "uploads"))
+MAX_UPLOAD = int(os.environ.get("AUDIO_STUDIO_MAX_UPLOAD_MB", "1024")) * 1024 * 1024
+FILE_TOOLS = {"separate", "pitch", "analyze", "cut", "convert"}
+MAX_JOBS_KEPT = 200
+# Keep the last model on the GPU for back-to-back jobs, then give the GPU back.
+IDLE_UNLOAD_S = float(os.environ.get("AUDIO_STUDIO_IDLE_UNLOAD_S", "300"))
+_last_activity = [time.perf_counter()]
+GPU_TOOLS = {"separate"}  # run in the worker process; everything else is CPU-only
+worker = GpuWorker()
+# Importing this module must have no side effects on disk: a stray `import server` (tests, tools)
+# once wiped a running instance's uploads mid-job. Cleanup happens only in clean_temp_files(),
+# called at real start-up after confirming no other instance owns the port.
+UPLOADS.mkdir(parents=True, exist_ok=True)
+
+
+def clean_temp_files():
+    """Delete leftovers from a previous run. Only call when this process is the sole server."""
+    shutil.rmtree(UPLOADS, ignore_errors=True)
+    shutil.rmtree(engine.OUT / ".work", ignore_errors=True)
+    UPLOADS.mkdir(parents=True, exist_ok=True)
+
+
+def port_in_use(port):
+    import socket
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(("127.0.0.1", port)) == 0
+
+app = FastAPI(title="Local Audio Studio")
+threading.stack_size(64 * 1024 * 1024)  # native audio/ML code needs more than Windows' 1 MB default
+pool = ThreadPoolExecutor(max_workers=1)  # one GPU job at a time; others wait in line
+pool.submit(lambda: None).result()  # create the worker thread now, with the large stack
+threading.stack_size(0)
+jobs: dict[str, dict] = {}
+uploads: dict[str, str] = {}
+lock = threading.Lock()
+
+
+def file_url(path):
+    rel = Path(path).resolve().relative_to(engine.OUT.resolve())
+    return "/files/" + "/".join(quote(part) for part in rel.parts)
+
+
+@app.get("/")
+def index():
+    return FileResponse(ROOT / "static" / "index.html")
+
+
+@app.get("/api/info")
+def info():
+    return {"device": engine.DEVICE, "gpu": engine.GPU_NAME, "output": str(engine.OUT), "formats": engine.FORMATS}
+
+
+@app.post("/api/upload")
+def upload(file: UploadFile = File(...)):  # noqa: B008 - FastAPI's declared-dependency idiom
+    # a plain def runs in FastAPI's thread pool, so writing a large upload never blocks
+    # the event loop (which would freeze progress polling for running jobs)
+    uid = uuid.uuid4().hex[:12]
+    d = UPLOADS / uid
+    d.mkdir()
+    name = Path((file.filename or "audio").replace("\\", "/")).name[-80:] or "audio"
+    dest = d / name
+    size = 0
+    with open(dest, "wb") as f:
+        while chunk := file.file.read(1 << 20):
+            size += len(chunk)
+            if size > MAX_UPLOAD:
+                f.close()
+                shutil.rmtree(d, ignore_errors=True)
+                raise HTTPException(413, f"File is larger than {MAX_UPLOAD // (1024 * 1024)} MB.")
+            f.write(chunk)
+    if size == 0:
+        shutil.rmtree(d, ignore_errors=True)
+        raise HTTPException(400, "The file is empty.")
+    try:
+        dur = engine.duration(dest)
+    except Exception:
+        shutil.rmtree(d, ignore_errors=True)
+        raise HTTPException(400, f"'{name}' is not a readable audio file.") from None
+    if dur <= 0:
+        shutil.rmtree(d, ignore_errors=True)
+        raise HTTPException(400, f"'{name}' contains no audio.")
+    uploads[uid] = str(dest)
+    return {"id": uid, "name": name, "duration": round(dur, 2), "size": size}
+
+
+@app.delete("/api/uploads/{uid}")
+def delete_upload(uid: str):
+    path = uploads.pop(uid, None)
+    if not path:
+        raise HTTPException(404, "Upload not found")
+    shutil.rmtree(Path(path).parent, ignore_errors=True)
+    return {"ok": True}
+
+
+def _resolve(tool, p):
+    """Validate the request shape and swap upload ids for file paths."""
+    if not isinstance(p, dict):
+        raise HTTPException(400, "params must be an object")
+    p = dict(p)
+    p.pop("file", None)  # clients may only refer to uploads, never to raw paths
+    if tool in FILE_TOOLS:
+        if "upload" not in p:
+            raise HTTPException(400, "Missing 'upload'. Upload a file first.")
+        p["file"] = uploads.get(str(p.pop("upload"))) or _missing()
+    if tool == "join":
+        ids = p.pop("uploads", None)
+        if not isinstance(ids, list):
+            raise HTTPException(400, "Missing 'uploads' list.")
+        p["files"] = [uploads.get(str(u)) or _missing() for u in ids]
+    return p
+
+
+def _missing():
+    raise HTTPException(400, "Uploaded file not found. Please upload it again.")
+
+
+def _run(jid, tool, params):
+    job = jobs[jid]
+
+    def report(frac, stage):
+        # Progress display must never be able to fail a job.
+        frac = max(job["progress"], min(0.999, float(frac)))
+        now = time.perf_counter()  # monotonic, high resolution (time.time() ticks every ~15 ms on Windows)
+        with lock:
+            job.update(progress=frac, stage=stage, status="running")
+            if not job.get("work_start") and frac >= 0.10:
+                job["work_start"], job["work_frac"] = now, frac
+            ws = job.get("work_start")
+            elapsed = now - ws if ws else 0.0
+            done = frac - job.get("work_frac", frac)
+            # Two updates in the same instant used to divide by zero and kill the job.
+            if ws and done > 0.02 and elapsed > 0.05:
+                job["eta"] = round((1 - frac) * elapsed / done)
+
+    job["started"] = time.time()
+    report(0.0, "Starting...")
+    try:
+        if tool in GPU_TOOLS:
+            res = worker.run(tool, params, report, user_error=engine.UserError)
+        else:
+            res = engine.TOOLS[tool](params, report)
+        for f in res.get("files", []):
+            f["url"] = file_url(f["path"])
+            f["name"] = Path(f["path"]).name
+            f["peaks"] = engine.peaks(f["path"])
+            f["size"] = Path(f["path"]).stat().st_size
+        job.update(status="done", progress=1.0, stage="Done", result=res, eta=0,
+                   elapsed=round(time.time() - job["started"], 1))
+    except (engine.UserError, WorkerCrashed) as e:
+        job.update(status="error", error=str(e))
+    except Exception as e:
+        traceback.print_exc()
+        job.update(status="error", error=f"{type(e).__name__}: {e}")
+    finally:
+        _last_activity[0] = time.perf_counter()
+
+
+def _busy():
+    return any(j["status"] in ("queued", "running") for j in jobs.values())
+
+
+def release_if_idle(now=None):
+    """Unload models once the app has been idle for IDLE_UNLOAD_S. Returns True if it unloaded."""
+    now = time.perf_counter() if now is None else now
+    if _busy() or not worker.alive or now - _last_activity[0] < IDLE_UNLOAD_S:
+        return False
+    return worker.stop()  # the worker process exits, so the OS reclaims all of its GPU memory
+
+
+def _idle_watcher():  # pragma: no cover - timing loop; release_if_idle() is unit-tested
+    while True:
+        time.sleep(15)
+        try:
+            release_if_idle()
+        except Exception:
+            traceback.print_exc()
+
+
+@app.post("/api/release-gpu")
+def release_gpu():
+    """Free all GPU memory now (waits for a running job first). Used by the test runner and other GPU apps."""
+    return {"released": worker.stop()}
+
+
+@app.post("/api/jobs")
+def create_job(body: dict):
+    tool = body.get("tool")
+    if tool not in engine.TOOLS:
+        raise HTTPException(400, "Unknown tool")
+    params = _resolve(tool, body.get("params", {}))
+    finished = [k for k, j in jobs.items() if j["status"] in ("done", "error")]
+    for k in finished[: max(0, len(jobs) - MAX_JOBS_KEPT)]:
+        jobs.pop(k, None)
+    jid = uuid.uuid4().hex[:12]
+    jobs[jid] = {"id": jid, "tool": tool, "status": "queued", "progress": 0.0,
+                 "stage": "Waiting for the previous job to finish...", "eta": None, "created": time.time()}
+    pool.submit(_run, jid, tool, params)
+    return {"id": jid}
+
+
+@app.get("/api/jobs/{jid}")
+def job_status(jid: str):
+    job = jobs.get(jid)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    out = {k: job.get(k) for k in ("id", "tool", "status", "progress", "stage", "eta", "error", "result", "elapsed")}
+    out["elapsed_now"] = round(time.time() - job.get("started", time.time()), 1)
+    return out
+
+
+@app.post("/api/open-folder")
+def open_folder(body: dict):
+    p = Path(body.get("path") or engine.OUT).resolve()
+    if p != engine.OUT.resolve() and engine.OUT.resolve() not in p.parents:
+        raise HTTPException(400, "Not an output folder")
+    if sys.platform == "win32":
+        os.startfile(p)  # noqa: S606 - opens Explorer on a folder already validated to be inside OUT
+    return {"ok": True}
+
+
+app.mount("/files", StaticFiles(directory=engine.OUT), name="files")
+app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
+
+def create_server(port):  # pragma: no cover - startup wiring; exercised by the e2e suite and desktop smoke test
+    """Prepare a uvicorn server for this app. Caller runs it (blocking .run() or in a thread)."""
+    clean_temp_files()
+    threading.Thread(target=_idle_watcher, daemon=True).start()
+    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    return uvicorn.Server(config)
+
+
+def shutdown():  # pragma: no cover - called by the desktop launcher on exit
+    worker.stop(timeout=5)
+
+
+if __name__ == "__main__":  # pragma: no cover - entry point; exercised by the e2e suite in a subprocess
+    port = int(os.environ.get("PORT", "7860"))
+    if port_in_use(port):
+        sys.exit(f"Local Audio Studio is already running at http://127.0.0.1:{port} - open that instead.")
+    print(f"Local Audio Studio running at http://127.0.0.1:{port}  ({engine.GPU_NAME})", flush=True)
+    create_server(port).run()

@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Tool caches and reports
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage*.xml
+htmlcov/
+test-results/
+playwright-report/
+
+# Build output (the offline app is ~5 GB: never commit it)
+build/
+dist/
+release/
+*.spec.bak
+packaging/*.exe
+
+# Audio, models and user data: never commit
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+*.mp4
+*.ckpt
+*.th
+*.pth
+*.onnx
+uploads/
+outputs/
+testdata/
+
+# Secrets and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+.claude/settings.local.json
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.claude/
