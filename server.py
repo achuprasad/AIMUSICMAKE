@@ -1,4 +1,5 @@
 """Local Audio Studio - web server. Run: python server.py  ->  http://127.0.0.1:7860"""
+# ruff: noqa: I001 - import order is deliberate: private settings (.env) must load before engine/feedback import
 import os
 import shutil
 import sys
@@ -11,14 +12,25 @@ from pathlib import Path
 from urllib.parse import quote
 
 import uvicorn
-from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from urllib.parse import urlparse
+
+from fastapi import FastAPI, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-import engine
-from gpu_worker import GpuWorker, WorkerCrashed
+import notify
 
 ROOT = Path(__file__).resolve().parent
+# Private settings (mail recipients, SMTP login) come from the environment or a git-ignored .env file.
+# They are read here and never sent to the browser. Tests set AUDIO_STUDIO_NO_DOTENV=1.
+if os.environ.get("AUDIO_STUDIO_NO_DOTENV") != "1":
+    notify.load_env_file(ROOT / ".env")
+    notify.load_env_file(Path(os.environ.get("LOCALAPPDATA", Path.home())) / "LocalAudioStudio" / "settings.env")
+
+import engine  # noqa: E402 - after the environment is loaded
+import feedback  # noqa: E402
+from gpu_worker import GpuWorker, WorkerCrashed  # noqa: E402
+
 UPLOADS = Path(os.environ.get("AUDIO_STUDIO_UPLOADS", engine.HOME / "uploads"))
 MAX_UPLOAD = int(os.environ.get("AUDIO_STUDIO_MAX_UPLOAD_MB", "1024")) * 1024 * 1024
 FILE_TOOLS = {"separate", "pitch", "analyze", "cut", "convert"}
@@ -47,6 +59,43 @@ def port_in_use(port):
         return s.connect_ex(("127.0.0.1", port)) == 0
 
 app = FastAPI(title="Local Audio Studio")
+
+# ------------------------------------------------------------------ request guards
+MAX_JSON_BODY = 64 * 1024
+EXTRA_ORIGINS = {o.strip().rstrip("/") for o in os.environ.get("AUDIO_STUDIO_ALLOWED_ORIGINS", "").split(",") if o.strip()}
+
+
+def same_origin(request):
+    """Block cross-site writes (CSRF): another website must not be able to drive this app from a visitor's browser."""
+    if request.headers.get("sec-fetch-site") == "cross-site":
+        return False
+    origin = request.headers.get("origin")
+    if origin is None:
+        return True  # non-browser clients (curl, tests) send no Origin; browsers always send it on POST
+    if origin == "null":
+        return False  # sandboxed iframes, local HTML files, data: URLs
+    if origin.rstrip("/") in EXTRA_ORIGINS:
+        return True
+    return urlparse(origin).netloc == request.headers.get("host")
+
+
+@app.middleware("http")
+async def guards(request: Request, call_next):
+    if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+        if not same_origin(request):
+            return JSONResponse({"detail": "Cross-site request blocked."}, status_code=403)
+        if not request.url.path.startswith("/api/upload"):  # uploads have their own 1 GB streaming limit
+            size = request.headers.get("content-length")
+            if size is None and request.headers.get("transfer-encoding"):
+                return JSONResponse({"detail": "Content-Length required."}, status_code=411)
+            if size is not None and (not size.isdigit() or int(size) > MAX_JSON_BODY):
+                return JSONResponse({"detail": "Request too large."}, status_code=413)
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "no-referrer")
+    return response
+
 threading.stack_size(64 * 1024 * 1024)  # native audio/ML code needs more than Windows' 1 MB default
 pool = ThreadPoolExecutor(max_workers=1)  # one GPU job at a time; others wait in line
 pool.submit(lambda: None).result()  # create the worker thread now, with the large stack
@@ -227,6 +276,87 @@ def job_status(jid: str):
     out = {k: job.get(k) for k in ("id", "tool", "status", "progress", "stage", "eta", "error", "result", "elapsed")}
     out["elapsed_now"] = round(time.time() - job.get("started", time.time()), 1)
     return out
+
+
+# ------------------------------------------------------------------ support & feedback
+GITHUB_ISSUES = os.environ.get("AUDIO_STUDIO_ISSUES_URL", "https://github.com/achuprasad/AIMUSICMAKE/issues/new")
+feedback_store = feedback.default_store()
+feedback_limiter = feedback.RateLimiter(limit=5, window=600)   # 5 messages per 10 min per client
+ip_limiter = feedback.RateLimiter(limit=20, window=600)         # and 20 per 10 min per IP (client ids are free to change)
+vote_limiter = feedback.RateLimiter(limit=60, window=600)
+try:
+    mailer = notify.Mailer.from_env()
+except notify.MailerConfigError as e:  # bad settings must not stop the app; feedback is still stored
+    print(f"Feedback e-mail disabled: {e}", flush=True)
+    mailer = notify.Mailer()
+
+
+def _mail_done(row, result):
+    feedback_store.add_event({"type": "notify", "id": row["id"], "result": result})
+
+
+def _client_key(request, client):
+    return f"{request.client.host if request.client else '?'}|{client}"
+
+
+@app.get("/api/support")
+def support_info():
+    # "delivery" says whether the team is e-mailed; the addresses themselves are never exposed
+    return {"mode": feedback_store.mode, "delivery": "email" if mailer.enabled else "local",
+            "version": feedback.APP_VERSION, "github_issues": GITHUB_ISSUES,
+            "categories": feedback.CATEGORIES, "tools": feedback.TOOLS}
+
+
+@app.post("/api/feedback", status_code=201)
+def submit_feedback(body: dict, request: Request):
+    try:
+        rec = feedback.validate(body)
+        ip_limiter.hit(request.client.host if request.client else "?")
+        feedback_limiter.hit(_client_key(request, rec["client"]))
+    except feedback.FeedbackError as e:
+        raise HTTPException(400, str(e)) from None
+    except feedback.RateLimited as e:
+        raise HTTPException(429, str(e)) from None
+    delivery = "email" if mailer.enabled else "local"
+    if isinstance(body, dict) and body.get("website"):  # honeypot field humans never see: silently drop bots
+        return {"id": "FB-" + uuid.uuid4().hex[:8].upper(), "created": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                "status": "received", "mode": feedback_store.mode, "delivery": delivery}
+    row = feedback_store.add_feedback(rec)  # stored first: a mail failure can never lose feedback
+    if mailer.enabled:
+        mailer.send_in_background(row, on_done=_mail_done)
+    return {"id": row["id"], "created": row["created"], "status": row["status"], "mode": feedback_store.mode,
+            "delivery": delivery}
+
+
+@app.get("/api/feedback")
+def my_feedback(client: str):
+    try:
+        client = feedback.clean_client(client)
+    except feedback.FeedbackError as e:
+        raise HTTPException(400, str(e)) from None
+    keep = ("id", "created", "status", "category", "tool", "title", "message", "rating")
+    return {"items": [{k: r.get(k) for k in keep} for r in feedback_store.list_feedback(client)]}
+
+
+@app.get("/api/support/roadmap")
+def roadmap(client: str = ""):
+    client = client if feedback.CLIENT_RE.match(client or "") else ""
+    return {"items": feedback.roadmap_with_votes(feedback_store, client)}
+
+
+@app.post("/api/support/roadmap/{item}/vote")
+def vote(item: str, body: dict, request: Request):
+    if item not in feedback.ROADMAP_IDS:
+        raise HTTPException(404, "Unknown roadmap item")
+    try:
+        client = feedback.clean_client(body.get("client"))
+        vote_limiter.hit(_client_key(request, client))
+    except feedback.FeedbackError as e:
+        raise HTTPException(400, str(e)) from None
+    except feedback.RateLimited as e:
+        raise HTTPException(429, str(e)) from None
+    feedback_store.set_vote(item, client, body.get("on", True) is True)
+    return next(r for r in feedback.roadmap_with_votes(feedback_store, client) if r["id"] == item)
 
 
 @app.post("/api/open-folder")

@@ -175,6 +175,40 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .region{position:relative}
 .region canvas{width:100%;height:90px;display:block;cursor:crosshair;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
 .empty{color:var(--faint);text-align:center;padding:26px 10px;font-size:13px}
+textarea{width:100%;min-height:130px;resize:vertical;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:10px 11px;outline:none;font:inherit;color:inherit;line-height:1.5}
+textarea:focus,input[type=text]:focus,input[type=email]:focus{border-color:var(--accent)}
+input[type=text],input[type=email]{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 11px;outline:none}
+.hp{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+.counter{font-size:11.5px;color:var(--faint);text-align:right;margin-top:4px;font-variant-numeric:tabular-nums}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--muted);cursor:pointer;margin-top:8px}
+.check input{width:16px;height:16px;margin-top:2px;accent-color:var(--accent);flex:none}
+.stars{display:flex;gap:4px}
+.stars button{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);color:var(--faint);font-size:17px;line-height:1}
+.stars button.on{color:#fbbf24;border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.1)}
+.notice{padding:12px 14px;border-radius:11px;font-size:13px;margin-top:14px;display:none}
+.notice.show{display:block}
+.notice.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#bbf7d0}
+.notice.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+.notice .btn{margin-top:10px}
+.rm{display:flex;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
+.rm .meta{flex:1;min-width:0}
+.rm .meta b{display:block;font-size:13.5px}
+.rm .meta span{font-size:12px;color:var(--muted)}
+.vote{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:72px;padding:6px 8px;border-radius:10px;border:1px solid var(--border-2);background:var(--surface);color:var(--muted);font-weight:600;font-size:12px;line-height:1.2}
+.vote b{font-size:16px;color:var(--text)}
+.vote.on{border-color:var(--accent);background:var(--accent-soft);color:#c7c0ff}
+.sub{padding:11px 13px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
+.sub .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.sub .top code{font-family:var(--mono);color:var(--text)}
+.sub b{display:block;margin:4px 0 2px;font-size:13.5px}
+.sub p{margin:0;color:var(--muted);font-size:12.5px;white-space:pre-wrap;word-break:break-word;max-height:4.5em;overflow:hidden}
+.pill{display:inline-block;padding:1px 8px;border-radius:20px;background:var(--surface-3);color:var(--text);font-weight:600;font-size:11px}
+details.faq{border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
+details.faq summary{cursor:pointer;padding:12px 14px;font-weight:600;font-size:13.5px;list-style:none;display:flex;justify-content:space-between;gap:10px}
+details.faq summary::-webkit-details-marker{display:none}
+details.faq summary::after{content:"+";color:var(--muted);font-weight:400}
+details.faq[open] summary::after{content:"\2212"}
+details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--surface-3);border:1px solid var(--border-2);padding:11px 16px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(120%);opacity:0;transition:.25s;z-index:9;font-weight:500}
 .toast.show{transform:none;opacity:1}
 @media (max-width:980px){.app{grid-template-columns:1fr}.side{position:static;height:auto}.grid{grid-template-columns:1fr}main{padding:20px}.kv{grid-template-columns:1fr 1fr}.stem{grid-template-columns:1fr}}
@@ -198,6 +232,10 @@ input[type=range]{width:100%;accent-color:var(--accent)}
       <button data-page="cut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></svg>Cutter</button>
       <button data-page="join"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="7" height="10" rx="2"/><rect x="14" y="7" width="7" height="10" rx="2"/><path d="M10 12h4"/></svg>Joiner</button>
       <button data-page="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/></svg>Converter</button>
+    </nav>
+    <div class="nav-label">Support</div>
+    <nav class="nav" id="nav3">
+      <button data-page="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a8 8 0 0 1-11.6 7.2L4 21l1.8-5.4A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 16.5h.01"/></svg>Help &amp; Feedback</button>
     </nav>
     <div class="side-foot">
       <div class="device"><div class="row"><span class="dot" id="devdot"></span><span id="devname">Detecting…</span></div><small id="devsub">Processing engine</small></div>
@@ -299,6 +337,51 @@ input[type=range]{width:100%;accent-color:var(--accent)}
         </div>
       </div>
       <div class="card progress" id="joinProg"></div><div class="results" id="joinRes"></div>
+    </section>
+
+    <!-- ================= SUPPORT ================= -->
+    <section class="page" id="page-support">
+      <div class="head"><div><h1>Help &amp; Feedback</h1><p>Tell us what to build next, report a problem, or find a quick answer.</p></div></div>
+      <div class="grid">
+        <div class="card">
+          <h3>Send feedback</h3>
+          <form id="fbForm" novalidate>
+            <div class="field"><label class="l">What is it about?</label>
+              <div class="seg" id="fbType" role="group" aria-label="Feedback type"><button type="button" class="sel" data-v="feature">Feature request</button><button type="button" data-v="suggestion">Suggestion</button><button type="button" data-v="bug">Bug report</button><button type="button" data-v="question">Question</button></div></div>
+            <div class="field"><label class="l" for="fbTool">Which part of the app?</label>
+              <select id="fbTool"><option value="general">General / whole app</option><option value="split">Vocal Remover &amp; Splitter</option><option value="pitch">Pitch &amp; Tempo</option><option value="analyze">Key &amp; BPM Finder</option><option value="cut">Cutter</option><option value="join">Joiner</option><option value="convert">Converter</option><option value="desktop-app">Windows app (install, window, speed)</option><option value="website">Website</option></select></div>
+            <div class="field"><label class="l" for="fbTitle">Title <em id="fbTitleCount">0/120</em></label>
+              <input type="text" id="fbTitle" maxlength="120" placeholder="e.g. Add noise removal for podcasts"></div>
+            <div class="field"><label class="l" for="fbMsg">Details</label>
+              <textarea id="fbMsg" maxlength="5000" placeholder="What would you like, or what happened? For bugs: what you did, what you expected, what you saw."></textarea>
+              <div class="counter" id="fbMsgCount">0 / 5000</div></div>
+            <div class="field"><label class="l">How do you like the app so far? <em>optional</em></label>
+              <div class="stars" id="fbStars" role="group" aria-label="Rating"><button type="button" data-v="1" aria-label="1 star" aria-pressed="false">&#9733;</button><button type="button" data-v="2" aria-label="2 stars" aria-pressed="false">&#9733;</button><button type="button" data-v="3" aria-label="3 stars" aria-pressed="false">&#9733;</button><button type="button" data-v="4" aria-label="4 stars" aria-pressed="false">&#9733;</button><button type="button" data-v="5" aria-label="5 stars" aria-pressed="false">&#9733;</button></div></div>
+            <div class="field"><label class="l" for="fbEmail">E-mail <em>optional, only if you want a reply</em></label>
+              <input type="email" id="fbEmail" maxlength="254" placeholder="you@example.com" autocomplete="email">
+              <label class="check"><input type="checkbox" id="fbConsent"><span>You may contact me at this e-mail about this feedback. It is used for nothing else.</span></label></div>
+            <label class="check"><input type="checkbox" id="fbDiag" checked><span>Include technical details (<span id="fbDiagPreview">app version, browser, screen size, GPU name</span>). Never your audio files.</span></label>
+            <div class="hp" aria-hidden="true"><label for="fbWebsite">Leave this empty</label><input type="text" id="fbWebsite" name="website" tabindex="-1" autocomplete="off" aria-label="Leave this empty"></div>
+            <button class="btn primary" id="fbSend" type="submit" style="margin-top:16px">Send feedback</button>
+          </form>
+          <div class="notice" id="fbResult" role="status" aria-live="polite"></div>
+        </div>
+        <div class="stack">
+          <div class="card"><h3>Vote on what's next</h3>
+            <p class="hint" style="margin:-6px 0 12px">Click the features you want most. The most-wanted ones get built first.</p>
+            <div id="roadmap"><div class="empty">Loading&hellip;</div></div></div>
+          <div class="card"><h3>Your submissions</h3><div id="fbMine"><div class="empty">Nothing sent yet.</div></div></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:18px"><h3>Frequently asked questions</h3>
+        <details class="faq"><summary>Which AI model should I use to remove vocals?</summary><div><b>BS-RoFormer</b> gives the cleanest vocal/instrumental split (12.5 dB vocal SDR measured on the MUSDB18 test set). <b>Mel-Band RoFormer</b> can sound more natural on some voices. Use <b>Demucs</b> when you need drums, bass, guitar or piano as separate stems.</div></details>
+        <details class="faq"><summary>How long does a song take?</summary><div>With an NVIDIA GPU and the default <b>Fast</b> speed, about 0.6&ndash;0.7 seconds per second of music: roughly 3 minutes for a 4&ndash;5 minute song. <b>Max</b> takes about 3&times; longer for a difference you can't hear. Without an NVIDIA GPU it runs on the processor and is much slower.</div></details>
+        <details class="faq"><summary>Are my songs uploaded to the internet?</summary><div>No. In the Windows app everything runs on your own computer; your audio never leaves it. Uploads are deleted every time the app starts. Results are saved to <code>Music\Local Audio Studio</code>.</div></details>
+        <details class="faq"><summary>Which files can I use?</summary><div>Almost any audio or video file: MP3, WAV, FLAC, M4A, OGG, AAC, MP4, MKV, MOV and more, up to 1 GB. You can save results as WAV, MP3, FLAC, OGG or M4A.</div></details>
+        <details class="faq"><summary>Can I hear changes before I download?</summary><div>Yes. Every uploaded song has a play button. On <b>Pitch &amp; Tempo</b> the speed and pitch sliders change the sound live while it plays; <b>Apply changes</b> then renders the full-quality file.</div></details>
+        <details class="faq"><summary>&ldquo;The AI engine stopped unexpectedly&rdquo; &mdash; what now?</summary><div>Usually the graphics card ran out of memory or its driver restarted. Close games or other AI apps and try again, or use the <b>Fast</b> speed or Demucs. The app keeps running; the next job starts a fresh AI engine.</div></details>
+        <details class="faq"><summary>Can I use the results commercially?</summary><div>The app claims no rights in your audio, but separating a song does not give you rights to it: you still need permission from the copyright owners of the original recording.</div></details>
+      </div>
     </section>
 
     <!-- ================= CONVERT ================= -->
@@ -796,6 +879,94 @@ $("#convertGo").onclick = async () => {
   try { const r = await runJob("convert", {upload: SOURCES.convert.id, format: getConv()}, $("#convertProg"), $("#convertGo"));
     singleResult($("#convertRes"), r, "Conversion complete"); } catch {}
 };
+
+/* ---------- page: help & feedback ---------- */
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
+const CLIENT = (() => {  // anonymous id: lets you see your own submissions and votes; not linked to your identity
+  let id = null;
+  try { id = localStorage.getItem("las-client"); } catch {}
+  if (!id || !/^[A-Za-z0-9-]{8,64}$/.test(id)) {
+    id = crypto.randomUUID ? crypto.randomUUID() : (Math.random().toString(36).slice(2) + Date.now().toString(36) + "-x");
+    try { localStorage.setItem("las-client", id); } catch {}
+  }
+  return id;
+})();
+let SUPPORT = {mode: "local", github_issues: "", version: "", categories: {}};
+const getFbType = picker($("#fbType"));
+let fbRating = null;
+$$("#fbStars button").forEach(b => b.onclick = () => {
+  const v = +b.dataset.v; fbRating = fbRating === v ? null : v;
+  $$("#fbStars button").forEach(x => { const on = !!fbRating && +x.dataset.v <= fbRating; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on); });
+});
+function diagnostics() {
+  return {app_version: SUPPORT.version, page: "support", gpu: INFO.gpu || "", device: INFO.device || "",
+          screen: `${screen.width}x${screen.height}`, user_agent: navigator.userAgent};
+}
+function fbCounters() {
+  $("#fbTitleCount").textContent = `${$("#fbTitle").value.length}/120`;
+  const n = $("#fbMsg").value.trim().length;
+  $("#fbMsgCount").textContent = `${$("#fbMsg").value.length} / 5000` + (n < 10 ? " · at least 10 characters" : "");
+}
+$("#fbTitle").oninput = $("#fbMsg").oninput = fbCounters;
+const TEMPLATE = {feature: "feature_request.yml", bug: "bug_report.yml", suggestion: "feedback.yml", question: "feedback.yml"};
+function githubUrl(type, title, msg) {
+  if (!SUPPORT.github_issues) return "";
+  const body = msg.length > 1800 ? msg.slice(0, 1800) + "…" : msg;
+  return `${SUPPORT.github_issues}?${new URLSearchParams({template: TEMPLATE[type], title, details: body, version: SUPPORT.version || ""})}`;
+}
+function showResult(kind, html) { const r = $("#fbResult"); r.className = `notice show ${kind}`; r.innerHTML = html; }
+$("#fbForm").onsubmit = async e => {
+  e.preventDefault();
+  const type = getFbType(), title = $("#fbTitle").value.trim(), msg = $("#fbMsg").value.trim(), email = $("#fbEmail").value.trim();
+  if (title.length < 3) return showResult("bad", "Please add a short title (at least 3 characters).");
+  if (msg.length < 10) return showResult("bad", "Please describe it in a few more words (at least 10 characters).");
+  if (email && !$("#fbConsent").checked) return showResult("bad", "Tick the consent box if you want a reply by e-mail, or leave the e-mail empty.");
+  const btn = $("#fbSend"); btn.disabled = true;
+  try {
+    const r = await api("/api/feedback", {category: type, tool: $("#fbTool").value, title, message: msg,
+      email: email || null, contact_consent: $("#fbConsent").checked, rating: fbRating,
+      diagnostics: $("#fbDiag").checked ? diagnostics() : {}, client: CLIENT, website: $("#fbWebsite").value});
+    const gh = githubUrl(type, title, msg);
+    showResult("ok", `<b>Thank you!</b> Reference <code>${esc(r.id)}</code>.` + (r.delivery === "email"
+      ? `<br>Sent to the team. ${email ? "We'll reply to your e-mail if we need more details." : "We read every message."}`
+      : "<br>It's saved on this computer. To make sure the developers see it, also send it on GitHub (free account needed; your text is filled in for you)." +
+        (gh ? `<br><a class="btn" id="fbGithub" href="${esc(gh)}" target="_blank" rel="noopener noreferrer">Send via GitHub</a>` : "")));
+    $("#fbTitle").value = ""; $("#fbMsg").value = ""; fbCounters();
+    loadMine();
+  } catch (err) { showResult("bad", esc(err.message)); }
+  btn.disabled = false;
+};
+async function loadMine() {
+  try {
+    const {items} = await api("/api/feedback?client=" + encodeURIComponent(CLIENT));
+    $("#fbMine").innerHTML = items.length ? items.map(i => `<div class="sub"><div class="top"><code>${esc(i.id)}</code>
+      <span class="pill">${esc(SUPPORT.categories[i.category] || i.category)}</span><span>${esc(String(i.created).replace("T", " "))}</span>
+      <span>&middot; ${esc(i.status)}</span></div><b>${esc(i.title)}</b><p>${esc(i.message)}</p></div>`).join("")
+      : `<div class="empty">Nothing sent yet.</div>`;
+  } catch {}
+}
+function voteLabel(i) { return `${i.voted ? "Remove my vote for" : "Vote for"} ${i.title}`; }
+async function loadRoadmap() {
+  try {
+    const {items} = await api("/api/support/roadmap?client=" + encodeURIComponent(CLIENT));
+    const host = $("#roadmap");
+    host.innerHTML = items.map(i => `<div class="rm"><div class="meta"><b>${esc(i.title)}</b><span>${esc(i.description)}</span></div>
+      <button class="vote${i.voted ? " on" : ""}" data-id="${esc(i.id)}" aria-pressed="${i.voted}" aria-label="${esc(voteLabel(i))}">
+      <b>${i.votes}</b>${i.voted ? "Voted" : "I want this"}</button></div>`).join("");
+    $$(".vote", host).forEach(b => b.onclick = async () => {
+      b.disabled = true;
+      try {
+        const r = await api(`/api/support/roadmap/${encodeURIComponent(b.dataset.id)}/vote`, {client: CLIENT, on: !b.classList.contains("on")});
+        b.classList.toggle("on", r.voted); b.setAttribute("aria-pressed", r.voted); b.setAttribute("aria-label", voteLabel(r));
+        b.innerHTML = `<b>${r.votes}</b>${r.voted ? "Voted" : "I want this"}`;
+      } catch (err) { toast(err.message); }
+      b.disabled = false;
+    });
+  } catch { $("#roadmap").innerHTML = `<div class="empty">Couldn't load the roadmap.</div>`; }
+}
+api("/api/support").then(s => { SUPPORT = s; }).catch(() => {});
+$$('.nav button[data-page="support"]').forEach(b => b.addEventListener("click", () => { loadRoadmap(); loadMine(); }));
+fbCounters();
 </script>
 </body>
 </html>

@@ -14,7 +14,10 @@ ROOT = Path(__file__).resolve().parents[2]
 def _start(port, gpu):
     tmp = Path(tempfile.mkdtemp(prefix="las-e2e-"))
     env = dict(os.environ, PORT=str(port), AUDIO_STUDIO_OUT=str(tmp / "out"),
-               AUDIO_STUDIO_UPLOADS=str(tmp / "uploads"), PYTHONUNBUFFERED="1")
+               AUDIO_STUDIO_UPLOADS=str(tmp / "uploads"), AUDIO_STUDIO_FEEDBACK=str(tmp / "feedback.jsonl"),
+               AUDIO_STUDIO_NO_DOTENV="1", PYTHONUNBUFFERED="1")
+    for k in ("SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM", "FEEDBACK_NOTIFY_TO"):
+        env.pop(k, None)
     if not gpu:
         env["CUDA_VISIBLE_DEVICES"] = "-1"
     log = tmp / "server.log"  # a file, not a pipe: an unread pipe would eventually block the server

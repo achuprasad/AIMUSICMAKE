@@ -43,16 +43,16 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Lint (ruff, incl. bandit security rules)
-        run: ruff check engine.py server.py gpu_worker.py desktop.py tests benchmarks scripts
+        run: ruff check engine.py server.py gpu_worker.py desktop.py notify.py feedback.py tests benchmarks scripts packaging
 
       - name: Type check (mypy)
-        run: mypy engine.py server.py gpu_worker.py desktop.py benchmarks/metrics.py benchmarks/audio_quality.py
+        run: mypy engine.py server.py gpu_worker.py desktop.py notify.py feedback.py benchmarks/metrics.py benchmarks/audio_quality.py
 
       - name: Unit tests
         run: pytest tests/test_engine.py tests/test_engine_models.py tests/test_worker.py tests/test_desktop.py -q -rs --cov --cov-report=
 
       - name: Integration / API / security tests
-        run: pytest tests/test_api.py -q -rs --cov --cov-append --cov-report=
+        run: pytest tests/test_api.py tests/test_feedback.py tests/test_notify.py -q -rs --cov --cov-append --cov-report=
 
       - name: Coverage >= 85 %
         run: coverage report --fail-under=85

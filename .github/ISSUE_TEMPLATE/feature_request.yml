@@ -1,0 +1,25 @@
+name: Feature request
+description: Suggest something new for Local Audio Studio
+title: "[Feature] "
+labels: ["enhancement", "from-app"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for the idea! Please don't paste personal data or private audio links here; this page is public.
+  - type: textarea
+    id: details
+    attributes:
+      label: What would you like?
+      description: What should it do, and what would you use it for?
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app?
+      options: [General, Vocal Remover / Splitter, Pitch & Tempo, Key & BPM, Cutter, Joiner, Converter, Windows app, Website]
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "1.0.0"

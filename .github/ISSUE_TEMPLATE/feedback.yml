@@ -1,0 +1,16 @@
+name: Suggestion or question
+description: General feedback, suggestions and questions
+title: "[Feedback] "
+labels: ["feedback", "from-app"]
+body:
+  - type: textarea
+    id: details
+    attributes:
+      label: Your suggestion or question
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "1.0.0"

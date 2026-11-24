@@ -19,6 +19,11 @@ sys.path.insert(0, str(ROOT))
 _TMP = Path(tempfile.mkdtemp(prefix="las-tests-"))
 os.environ["AUDIO_STUDIO_OUT"] = str(_TMP / "out")
 os.environ["AUDIO_STUDIO_UPLOADS"] = str(_TMP / "uploads")
+os.environ["AUDIO_STUDIO_FEEDBACK"] = str(_TMP / "feedback.jsonl")
+# never read the developer's private .env and never send real e-mail from tests
+os.environ["AUDIO_STUDIO_NO_DOTENV"] = "1"
+for _k in ("SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM", "FEEDBACK_NOTIFY_TO"):
+    os.environ.pop(_k, None)
 
 SR = 44100
 

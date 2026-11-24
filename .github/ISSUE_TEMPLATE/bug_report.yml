@@ -1,0 +1,33 @@
+name: Bug report
+description: Something doesn't work as expected
+title: "[Bug] "
+labels: ["bug", "from-app"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! This page is public: don't paste personal data, and don't upload copyrighted songs.
+        For **security problems** don't open an issue; use *Security → Report a vulnerability* instead.
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw (error messages help a lot).
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      placeholder: "1.0.0"
+  - type: input
+    id: system
+    attributes:
+      label: Windows version and GPU
+      placeholder: "Windows 11, GeForce GTX 1650"
+  - type: textarea
+    id: log
+    attributes:
+      label: Log (optional)
+      description: Last lines of %LOCALAPPDATA%\LocalAudioStudio\logs\app.log
+      render: text

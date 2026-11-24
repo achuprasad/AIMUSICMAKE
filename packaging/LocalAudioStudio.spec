@@ -12,7 +12,7 @@ ROOT = Path(SPECPATH).parent  # noqa: F821 - provided by PyInstaller
 
 datas = [(str(ROOT / "static"), "static")]
 binaries = []
-hiddenimports = ["server", "engine", "gpu_worker", "uvicorn.logging", "uvicorn.loops.auto",
+hiddenimports = ["server", "engine", "gpu_worker", "notify", "feedback", "uvicorn.logging", "uvicorn.loops.auto",
                  "uvicorn.protocols.http.auto", "uvicorn.protocols.websockets.auto", "uvicorn.lifespan.on",
                  "python_multipart", "multipart"]
 

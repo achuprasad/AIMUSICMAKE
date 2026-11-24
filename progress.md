@@ -75,6 +75,25 @@ Uncovered: `engine.py` 112–113 (fallback if audio-separator's internals move),
 
 | 16 | After "releasing" the GPU, the server process kept ~700 MB of CUDA context, so another GPU program (and the GPU test suite) ran out of memory on the 4 GB card | High | Quality gate (GPU stage FAIL) | AI moved into a separate worker process that exits when idle: `test_worker_process_returns_all_gpu_memory`, `test_parent_never_initialises_cuda`, `test_crash_mid_job_is_reported_and_next_job_recovers` |
 
+### Defect 17 (2026-11-24): orphaned AI worker held GPU memory after the app was killed
+- **Found by:** quality gate GPU stage FAIL (3 of 12 tests: CUDA out of memory, "0 bytes free").
+- **Cause:** when the server process is killed abruptly (Task Manager, crash, a test runner stopping it), its
+  AI worker child kept running with ~0.8 GB of GPU memory each. Two such orphans (from 2026-11-23 22:56 and
+  2026-11-24 08:20) filled the 4 GB card. The same would happen to a user whose app crashes.
+- **Also found:** the local gate script had never run `test_desktop.py`, `test_feedback.py`, `test_notify.py`
+  (my text-replace edit had silently not applied); CI on GitHub did run them. Fixed; the gate now runs 258
+  unit + integration tests instead of 164.
+- **Fix:** the worker watches its parent process and exits the moment the parent ends, however it ended.
+- **Regression test:** `test_worker_exits_when_parent_is_killed` hard-kills a parent; verified to FAIL
+  without the fix and PASS with it; 0 orphans after the full test run.
+
+### Help & Feedback page (2026-11-24, user request)
+- Feedback form, roadmap voting, FAQ, own submissions; e-mail to both owners via private `.env` (addresses never in code, responses, HTML or logs).
+- Security: CSRF same-origin guard on all write endpoints, 64 KB body limit, security headers, rate limits, honeypot, hourly e-mail cap, header-injection-safe e-mail, XSS-safe rendering.
+- Tests: `tests/test_feedback.py`, `tests/test_notify.py` (incl. a real SMTP conversation with a local test server), 6 new e-2-e tests (incl. an XSS attempt). End-to-end check with the real server and the private `.env`: one message delivered to exactly the two owner addresses, none visible to the browser.
+- Defects found while building it (fixed before release): the title was copied raw into the e-mail body (header-looking lines); `Origin: null` was initially allowed in a draft of the guard; a draft secrets test flagged a hostname instead of addresses.
+- Windows installer test (2026-11-24): **27/27 PASS**: install, files, shortcuts, Apps entry, version info, installed-app smoke test on GPU, uninstall, cleanup, songs kept. The released 1.0.0 installer was built **before** this page existed; the next build will include it.
+
 ### Feature changes after user feedback
 - Remove / Replace buttons on every uploaded file (`test_replace_file`, `test_removing_file_deletes_upload`).
 - Source preview player on every tool; live speed/pitch preview on Pitch & Tempo (`test_live_pitch_and_speed_preview` measures that the shifter outputs real audio).

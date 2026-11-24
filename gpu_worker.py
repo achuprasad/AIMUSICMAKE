@@ -10,13 +10,27 @@ Protocol (multiprocessing queues):
   worker -> parent: ("progress", frac, stage) | ("done", result) | ("error", message, is_user_error)
 """
 import multiprocessing as mp
+import os
 import queue
 import threading
 import time
 from typing import Any
 
 
+def _exit_when_parent_dies():  # pragma: no cover - runs in the child process; see test_worker_exits_when_parent_is_killed
+    """If the app is killed (Task Manager, crash), its worker must not live on holding GPU memory."""
+    parent = mp.parent_process()
+    if parent is None:
+        return
+
+    def watch():
+        parent.join()  # returns as soon as the parent process ends, however it ended
+        os._exit(0)
+    threading.Thread(target=watch, daemon=True, name="parent-watch").start()
+
+
 def _worker_main(inq, outq):  # pragma: no cover - runs in the child process; exercised by tests/test_worker.py
+    _exit_when_parent_dies()
     import engine  # imported here so the parent process never touches CUDA
     while True:
         msg = inq.get()

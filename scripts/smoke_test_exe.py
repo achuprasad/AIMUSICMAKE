@@ -54,7 +54,8 @@ def main(exe):
     env = dict(os.environ)
     # a fresh PC: empty profile, no ffmpeg on PATH, nothing from the dev environment
     env.update(USERPROFILE=str(profile), LOCALAPPDATA=str(profile / "AppData" / "Local"),
-               AUDIO_STUDIO_OUT=str(tmp / "out"), AUDIO_STUDIO_UPLOADS=str(tmp / "uploads"))
+               AUDIO_STUDIO_OUT=str(tmp / "out"), AUDIO_STUDIO_UPLOADS=str(tmp / "uploads"),
+               AUDIO_STUDIO_FEEDBACK=str(tmp / "feedback.jsonl"))
     for k in ("AUDIO_STUDIO_MODELS", "TORCH_HOME", "VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME"):
         env.pop(k, None)
     env["PATH"] = os.pathsep.join(p for p in env["PATH"].split(os.pathsep)

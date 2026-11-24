@@ -7,7 +7,7 @@ from playwright.sync_api import expect
 pytestmark = pytest.mark.e2e
 
 PAGES = {"split": "Vocal Remover & Stem Splitter", "pitch": "Pitch & Tempo Changer", "analyze": "Key & BPM Finder",
-         "cut": "Audio Cutter", "join": "Audio Joiner", "convert": "Audio Converter"}
+         "cut": "Audio Cutter", "join": "Audio Joiner", "convert": "Audio Converter", "support": "Help & Feedback"}
 
 
 def goto(page, url, name):
@@ -36,6 +36,90 @@ def test_run_button_disabled_until_upload(page, app_url):
     page.goto(app_url)
     for name in ("split", "pitch", "analyze", "cut", "convert", "join"):
         expect(page.locator(f"#{name}Go")).to_be_disabled()
+
+
+# ------------------------------------------------------------------ Help & Feedback
+def test_feedback_submit_and_list(page, app_url, errors):
+    goto(page, app_url, "support")
+    page.click('#fbType button[data-v="bug"]')
+    page.select_option("#fbTool", "split")
+    page.fill("#fbTitle", "Stems are too quiet")
+    page.fill("#fbMsg", "After splitting, the vocal stem is very quiet compared to the original.")
+    page.click('#fbStars button[data-v="4"]')
+    expect(page.locator("#fbStars button.on")).to_have_count(4)
+    page.click("#fbSend")
+    res = page.locator("#fbResult")
+    expect(res).to_contain_text("Thank you!")
+    expect(res).to_contain_text("saved on this computer")  # tests run with e-mail off: the page says so honestly
+    ref = res.locator("code").inner_text()
+    assert ref.startswith("FB-")
+    gh = res.locator("#fbGithub").get_attribute("href")
+    assert gh.startswith("https://github.com/achuprasad/AIMUSICMAKE/issues/new?") and "template=bug_report.yml" in gh
+    assert "Stems+are+too+quiet" in gh
+    expect(page.locator("#fbMine .sub")).to_have_count(1)
+    expect(page.locator("#fbMine")).to_contain_text(ref)
+    expect(page.locator("#fbTitle")).to_have_value("")
+    assert not errors
+
+
+def test_feedback_validation_messages(page, app_url):
+    goto(page, app_url, "support")
+    page.fill("#fbTitle", "Hi there")
+    page.fill("#fbMsg", "short")
+    page.click("#fbSend")
+    expect(page.locator("#fbResult")).to_contain_text("at least 10 characters")
+    page.fill("#fbMsg", "A long enough description of the idea.")
+    page.fill("#fbEmail", "me@example.com")
+    page.click("#fbSend")
+    expect(page.locator("#fbResult")).to_contain_text("consent")
+    expect(page.locator("#fbMine .sub")).to_have_count(0)
+
+
+def test_feedback_xss_is_rendered_as_text(page, app_url, errors):
+    goto(page, app_url, "support")
+    evil_title = '<img src=x onerror="window.__xss=1">'
+    evil_msg = '<script>window.__xss=2</script><b onmouseover="window.__xss=3">bold?</b> hello world'
+    page.fill("#fbTitle", evil_title)
+    page.fill("#fbMsg", evil_msg)
+    page.click("#fbSend")
+    expect(page.locator("#fbMine .sub")).to_have_count(1)
+    page.wait_for_timeout(500)
+    assert page.evaluate("window.__xss") is None
+    assert page.locator("#fbMine img, #fbMine script, #fbMine .sub p b").count() == 0
+    expect(page.locator("#fbMine .sub b").first).to_have_text(evil_title)  # shown literally
+    assert not errors
+
+
+def test_roadmap_voting(page, app_url):
+    goto(page, app_url, "support")
+    items = page.locator("#roadmap .rm")
+    expect(items).to_have_count(10)
+    btn = page.locator('#roadmap .vote[data-id="noise-removal"]')
+    before = int(btn.locator("b").inner_text())
+    btn.click()
+    expect(btn).to_have_class(re.compile(r"\bon\b"))
+    expect(btn).to_have_attribute("aria-pressed", "true")
+    expect(btn.locator("b")).to_have_text(str(before + 1))
+    page.reload()
+    goto(page, app_url, "support")
+    btn = page.locator('#roadmap .vote[data-id="noise-removal"]')
+    expect(btn).to_have_class(re.compile(r"\bon\b"))  # remembered for this browser
+    btn.click()
+    expect(btn.locator("b")).to_have_text(str(before))
+
+
+def test_faq_opens(page, app_url):
+    goto(page, app_url, "support")
+    faq = page.locator("details.faq").first
+    expect(faq.locator("div")).to_be_hidden()
+    faq.locator("summary").click()
+    expect(faq.locator("div")).to_be_visible()
+
+
+def test_honeypot_is_invisible_to_people(page, app_url):
+    goto(page, app_url, "support")
+    box = page.locator("#fbWebsite").bounding_box()
+    assert box is None or box["x"] < -1000 or box["width"] <= 1
 
 
 def test_cut_flow(page, app_url, fixtures, errors):

@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Help & Feedback page: feature requests, suggestions, bug reports, questions, rating, roadmap voting, FAQ, "your submissions"; e-mail to the owners (private addresses, SMTP over TLS, hourly cap); GitHub issue forms and "Send via GitHub" for the offline app.
+- App-wide request guards: same-origin check on every write request, 64 KB JSON limit, security headers.
+
 ## 1.0.0 — 2026-11-23 (first release)
 
 ### Added

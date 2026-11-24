@@ -15,6 +15,7 @@ and [docs/CLOUD_HANDOVER.md](docs/CLOUD_HANDOVER.md).
 | **Cutter** | Waveform range selection, fade in/out |
 | **Joiner** | Reorder tracks, crossfade |
 | **Converter** | Any audio/video file → WAV, MP3, FLAC, OGG, M4A |
+| **Help & Feedback** | Feature requests, suggestions, bug reports, questions; roadmap voting; FAQ. New messages are e-mailed to the owners when configured (addresses stay private): [docs/support-and-feedback.md](docs/support-and-feedback.md) |
 
 Measured quality (MUSDB18, median SDR): BS-RoFormer vocals **12.5 dB**, instrumental **16.3 dB**.
 See [docs/audio-quality-benchmarks.md](docs/audio-quality-benchmarks.md).

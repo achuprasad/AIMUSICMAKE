@@ -15,6 +15,8 @@ reproduce, the affected version and the impact. You'll get an acknowledgement wi
 - Every option is validated against an allowlist or numeric range; raw file paths from clients
   are never accepted.
 - Output files are only served from the output folder; path traversal is tested.
+- Every write request (POST/PUT/PATCH/DELETE) must be same-origin: cross-site requests and `Origin: null` are rejected (CSRF protection), JSON bodies are limited to 64 KB, and responses carry `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`.
+- Feedback: length limits, control-character stripping, rate limits (client, IP, hourly e-mail cap), honeypot, plain-text storage and e-mail, header-injection-safe addresses. Notification recipients and SMTP credentials live only in environment variables or the git-ignored `.env`; they are never sent to the browser, logged or committed (tests enforce this).
 - AI inference runs in a separate process; a crash there cannot take down the server.
 - Automated checks: ruff with bandit (`S`) rules, mypy, pip-audit, Gitleaks (CI).
 

@@ -27,10 +27,10 @@ function Invoke-Stage($name, [scriptblock]$cmd) {
 }
 
 $env:CUDA_VISIBLE_DEVICES = "-1"   # non-GPU stages must not touch the graphics card
-Invoke-Stage "1 Lint (ruff)"             { & "$V\ruff.exe" check engine.py server.py gpu_worker.py desktop.py tests benchmarks scripts packaging }
-Invoke-Stage "2 Type check (mypy)"       { & $Py -m mypy engine.py server.py gpu_worker.py desktop.py benchmarks\metrics.py benchmarks\audio_quality.py }
-Invoke-Stage "3 Unit tests"              { & $Py -m pytest tests\test_engine.py tests\test_engine_models.py tests\test_worker.py -q -p no:cacheprovider -rs @Cov }
-Invoke-Stage "4 Integration tests"       { & $Py -m pytest tests\test_api.py -q -p no:cacheprovider -rs @Cov }
+Invoke-Stage "1 Lint (ruff)"             { & "$V\ruff.exe" check engine.py server.py gpu_worker.py desktop.py notify.py feedback.py tests benchmarks scripts packaging }
+Invoke-Stage "2 Type check (mypy)"       { & $Py -m mypy engine.py server.py gpu_worker.py desktop.py notify.py feedback.py benchmarks\metrics.py benchmarks\audio_quality.py }
+Invoke-Stage "3 Unit tests"              { & $Py -m pytest tests\test_engine.py tests\test_engine_models.py tests\test_worker.py tests\test_desktop.py -q -p no:cacheprovider -rs @Cov }
+Invoke-Stage "4 Integration tests"       { & $Py -m pytest tests\test_api.py tests\test_feedback.py tests\test_notify.py -q -p no:cacheprovider -rs @Cov }
 Invoke-Stage "5 Frontend e2e (Chromium)" { & $Py -m pytest tests\e2e\test_ui.py -q -p no:cacheprovider -rs --browser chromium }
 Invoke-Stage "5 Frontend e2e (Edge)"     { & $Py -m pytest tests\e2e\test_ui.py -q -p no:cacheprovider -rs --browser chromium --browser-channel msedge }
 Invoke-Stage "6 Security (pip-audit)"    { & $Py -m pip_audit --progress-spinner off }
@@ -38,7 +38,7 @@ Invoke-Stage "7 Build verification"      {
     # isolated folders: a build check must never touch the real app's uploads or output
     $tmp = Join-Path $env:TEMP ("las-build-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
     $env:AUDIO_STUDIO_OUT = "$tmp\out"; $env:AUDIO_STUDIO_UPLOADS = "$tmp\uploads"
-    & $Py -m compileall -q engine.py server.py gpu_worker.py desktop.py
+    & $Py -m compileall -q engine.py server.py gpu_worker.py desktop.py notify.py feedback.py
     if ($?) { & $Py -c "import server; print('server imports OK')" }
     Remove-Item Env:AUDIO_STUDIO_OUT, Env:AUDIO_STUDIO_UPLOADS
 }

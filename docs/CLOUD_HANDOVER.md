@@ -118,6 +118,7 @@ strategy, test cases, audio benchmarks, Windows build, this handover), `progress
 | Freemium quotas, Razorpay payments, subscriptions | Cloud team scope; must be enforced server-side |
 | Browser-side processing of light edits | Today light edits run on the local server |
 | Multi-track timeline, undo/redo, projects, autosave | Planned (P2) |
+| Feedback in a database, admin view, Turnstile | Help & Feedback works locally with e-mail to the owners; web migration steps in docs/support-and-feedback.md |
 | Noise removal, mastering, LUFS normalisation, export presets, video tools, NL assistant, SFX library | Planned (P1–P3), see technical-assessment §3 |
 | Job cancellation and timeouts | Needed before any cloud use |
 | Auto-updater, code signing | Planned |
@@ -193,6 +194,10 @@ YOUR SCOPE:
    Semgrep, Trivy for container images, an OWASP ZAP baseline against staging, protected
    main branch, and a deploy workflow to staging. Production deploys need manual approval.
 9. Licences: confirm the RoFormer weights' licence for commercial use, or replace the models.
+10. Help & Feedback (docs/support-and-feedback.md): move feedback and votes to Postgres, tie them to
+   the logged-in user, add Cloudflare Turnstile, set FEEDBACK_NOTIFY_TO and SMTP_* as platform
+   secrets (the owners give you the addresses privately; never put them in code), build a
+   protected admin view. Keep the existing security tests green.
 
 RULES:
 - Inspect the code before changing it; preserve working behaviour; keep or extend the tests,

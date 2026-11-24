@@ -18,7 +18,7 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S108", "PLW1510", "E402"]  # asserts and temp paths are the point of tests
+"tests/**" = ["S101", "S106", "S108", "PLW1510", "E402"]  # S106: fake test passwords  # asserts and temp paths are the point of tests
 "benchmarks/**" = ["E402"]  # sys.path set-up must precede local imports
 "scripts/**" = ["S310", "S108"]  # smoke tests call the app on a fixed http://127.0.0.1 port
 "packaging/**" = ["F821"]  # PyInstaller injects Analysis/EXE/... into spec files
@@ -28,7 +28,7 @@ ignore_missing_imports = true
 check_untyped_defs = true
 
 [tool.coverage.run]
-source = ["engine", "server", "gpu_worker", "desktop"]
+source = ["engine", "server", "gpu_worker", "desktop", "notify", "feedback"]
 branch = true
 
 [tool.coverage.report]

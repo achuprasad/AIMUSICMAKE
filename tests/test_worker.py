@@ -74,6 +74,43 @@ def test_crash_mid_job_is_reported_and_next_job_recovers(worker, fixtures):
     assert res["files"][0]["path"].endswith(".wav")
 
 
+def _alive(pid):
+    import subprocess
+    out = subprocess.run(["tasklist", "/FI", f"PID eq {pid}", "/NH"], capture_output=True, text=True, check=False).stdout
+    return str(pid) in out
+
+
+@pytest.mark.skipif(__import__("sys").platform != "win32", reason="uses tasklist")
+def test_worker_exits_when_parent_is_killed(tmp_path):
+    """Regression: a killed app left its AI worker running, holding ~1.5 GB of GPU memory forever."""
+    import os
+    import subprocess
+    import sys
+    root = os.path.dirname(os.path.dirname(__file__))
+    script = tmp_path / "parent.py"
+    script.write_text(
+        "import sys, time\n"
+        f"sys.path.insert(0, {root!r})\n"
+        "from gpu_worker import GpuWorker\n"
+        "if __name__ == '__main__':\n"
+        "    w = GpuWorker()\n"
+        "    w._start()\n"
+        "    print(w.proc.pid, flush=True)\n"
+        "    time.sleep(300)\n", encoding="utf-8")
+    parent = subprocess.Popen([sys.executable, str(script)], stdout=subprocess.PIPE, text=True,
+                              env=dict(os.environ, CUDA_VISIBLE_DEVICES="-1"))
+    child = int(parent.stdout.readline())
+    time.sleep(3)  # let the worker finish starting up
+    assert _alive(child)
+    parent.kill()  # hard kill, like Task Manager: no cleanup code runs in the parent
+    parent.wait(10)
+    for _ in range(100):
+        if not _alive(child):
+            break
+        time.sleep(0.1)
+    assert not _alive(child), "orphaned worker still running after its parent was killed"
+
+
 def test_parent_never_initialises_cuda():
     """The web server must not hold a CUDA context; only the worker may."""
     import torch
