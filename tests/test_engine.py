@@ -240,6 +240,89 @@ class TestPitchTempo:
             engine.pitch_tempo({"file": str(fixtures["tone_wav"]), **params}, Rec())
 
 
+def centroid(x, sr=SR):
+    """Spectral centroid in Hz: lower = darker / more muffled."""
+    spec = np.abs(np.fft.rfft(np.asarray(x, np.float64)))
+    f = np.fft.rfftfreq(len(x), 1 / sr)
+    return float((spec * f).sum() / spec.sum())
+
+
+class TestEffects:
+    @pytest.fixture
+    def bright(self):
+        rng = np.random.default_rng(1)
+        return (rng.standard_normal((2, SR * 2)) * 0.2).astype(np.float32)  # white noise: full spectrum
+
+    def test_lofi_darkens_and_keeps_level_and_length(self, bright):
+        out = engine.lofi(bright, 80)
+        assert out.shape == bright.shape
+        assert centroid(out[0]) < 0.45 * centroid(bright[0])          # clearly muffled
+        assert np.abs(out).max() <= 1.0
+        assert abs(np.abs(out).max() - np.abs(bright).max()) < 0.05    # level kept
+
+    def test_lofi_strength_scales(self, bright):
+        assert centroid(engine.lofi(bright, 90)[0]) < centroid(engine.lofi(bright, 30)[0])
+
+    def test_lofi_is_deterministic_and_zero_is_off(self, bright):
+        assert np.array_equal(engine.lofi(bright, 60), engine.lofi(bright, 60))
+        assert engine.lofi(bright, 0) is bright
+
+    def test_lofi_reduces_bit_depth(self):
+        t = np.arange(SR) / SR
+        x = np.stack([0.5 * np.sin(2 * np.pi * 220 * t)] * 2).astype(np.float32)
+        out = engine.lofi(x, 100)
+        # full lo-fi bit-crushes to 9 bits: at most 2*2^9+1 distinct sample values (16-bit audio has ~65,000)
+        assert len(np.unique(out[0])) <= 2 * 2 ** 9 + 1
+        assert len(np.unique(engine.lofi(x, 20)[0])) > 2 * 2 ** 9 + 1  # light lo-fi keeps finer resolution
+
+    def test_echo_repeats_at_the_right_time_and_level(self):
+        x = np.zeros((2, SR), np.float32)
+        x[:, 100] = 0.5                                                # one click
+        out = engine.echo(x, delay_ms=250, feedback=50, mix=60)
+        d = int(0.25 * SR)
+        assert out.shape[1] > x.shape[1]                               # tail added for the echoes to ring out
+        for k, expected in [(1, 0.5 * 0.6), (2, 0.5 * 0.6 * 0.5), (3, 0.5 * 0.6 * 0.25)]:
+            assert abs(out[0, 100 + k * d] - expected) < 1e-6
+        assert out[0, 100] == pytest.approx(0.5)                       # original untouched
+
+    def test_echo_single_repeat_without_feedback(self):
+        x = np.zeros((1, SR), np.float32)
+        x[0, 0] = 0.5
+        out = engine.echo(x, delay_ms=100, feedback=0, mix=50)
+        d = int(0.1 * SR)
+        assert out.shape[1] == SR + d and out[0, d] == pytest.approx(0.25) and np.count_nonzero(out) == 2
+
+    def test_echo_mix_zero_is_off_and_never_clips(self, bright):
+        assert engine.echo(bright, 300, 50, 0) is bright
+        loud = np.full((2, SR), 0.9, np.float32)
+        assert np.abs(engine.echo(loud, 100, 80, 100)).max() <= 0.98 + 1e-6
+
+    def test_echo_tail_is_capped(self):
+        x = np.zeros((1, SR), np.float32)
+        out = engine.echo(x + 0.1, delay_ms=1500, feedback=85, mix=100)
+        assert out.shape[1] <= SR + int(8.0 * SR) + 1
+
+    def test_pitch_tool_with_lofi_and_echo(self, fixtures):
+        res = engine.pitch_tempo({"file": str(fixtures["tone_wav"]), "lofi": 60, "echo_delay": 200, "echo_feedback": 30,
+                                  "echo_mix": 40, "format": "wav"}, Rec())
+        f = res["files"][0]["path"]
+        assert "lofi 60" in f and "echo 200ms" in f
+        y, sr = sf.read(f)
+        assert sr == SR and y.shape[1] == 2 and len(y) / SR > 5.0       # echo tail added
+        assert np.abs(y).max() <= 1.0
+
+    def test_effects_only_without_speed_or_pitch_change(self, fixtures):
+        res = engine.pitch_tempo({"file": str(fixtures["tone_wav"]), "lofi": 40, "format": "wav"}, Rec())
+        assert abs(sf.info(res["files"][0]["path"]).duration - 5.0) < 0.001  # lo-fi alone keeps the length
+
+    @pytest.mark.parametrize("params", [{"lofi": 101}, {"lofi": -1}, {"echo_delay": 10, "echo_mix": 50},
+                                        {"echo_delay": 2000, "echo_mix": 50}, {"echo_feedback": 95, "echo_mix": 50},
+                                        {"echo_mix": 150}, {"lofi": "lots"}])
+    def test_effect_values_are_validated(self, fixtures, params):
+        with pytest.raises(UserError):
+            engine.pitch_tempo({"file": str(fixtures["tone_wav"]), **params}, Rec())
+
+
 class TestAnalyze:
     def test_key_of_a_major_triad(self, fixtures):
         a = engine.analyze({"file": str(fixtures["a_major"])}, Rec())["analysis"]

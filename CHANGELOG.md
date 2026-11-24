@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- Pitch & Tempo: **Lo-fi** (warm filtering, tape saturation, bit-crush, soft vinyl hiss and crackle;
+  amount 5–100) and **Echo** (delay 50–1000 ms, repeats, echo volume). Both are heard live in the preview
+  and rendered into the downloaded file. Presets: "Lo-fi chill", "Slowed + Echo", "Reset".
+
 ## 1.1.0 — 2026-11-24
 
 ### Changed

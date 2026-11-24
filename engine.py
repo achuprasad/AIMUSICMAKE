@@ -326,16 +326,68 @@ def mix(p, report):
     return _result(folder, [("custom_mix", save_audio(out, folder / f"custom mix {time.strftime('%H%M%S')}", fmt=fmt))])
 
 
+def lofi(audio, amount, sr=SR, seed=7):
+    """Lo-fi colour, 0..100: band-limited (muffled), lower bit depth, gentle tape-style saturation,
+    soft vinyl hiss and crackle. Deterministic (fixed seed), so the same settings give the same file."""
+    from scipy.signal import butter, sosfilt
+
+    a = max(0.0, min(1.0, amount / 100.0))
+    if a == 0:
+        return audio
+    x = np.atleast_2d(audio).astype(np.float32)
+    peak_in = float(np.abs(x).max()) or 1.0
+    hp = butter(2, 60 + 190 * a, btype="highpass", fs=sr, output="sos")
+    lp = butter(4, 12000 - 8800 * a, btype="lowpass", fs=sr, output="sos")      # 12 kHz -> 3.2 kHz
+    y = sosfilt(lp, sosfilt(hp, x, axis=-1), axis=-1)
+    drive = 1 + 2.5 * a                                                            # warm saturation
+    y = np.tanh(drive * y) / np.tanh(drive)
+    rng = np.random.default_rng(seed)
+    n = y.shape[-1]
+    hiss = rng.standard_normal((y.shape[0], n)).astype(np.float32) * 0.003 * a
+    crackle = np.zeros((y.shape[0], n), np.float32)
+    pops = rng.random((y.shape[0], n)) < 0.00025 * a                               # ~6 pops/s at full amount
+    crackle[pops] = rng.uniform(-1, 1, int(pops.sum())) * 0.12 * a
+    y = y + hiss + sosfilt(butter(2, 2500, btype="highpass", fs=sr, output="sos"), crackle, axis=-1)
+    y = np.clip(y, -1.0, 1.0)
+    levels = 2 ** (16 - 7 * a)                                                     # bit-crush last: 16 -> 9 bits
+    y = np.round(y * levels) / levels
+    peak = float(np.abs(y).max()) or 1.0
+    return (y * min(1.0, peak_in / peak * 0.98)).astype(np.float32)                # keep the original level, never clip
+
+
+def echo(audio, delay_ms, feedback, mix, sr=SR, max_tail_s=8.0):
+    """Echo (feedback delay). Repeats k = 1..K are added at k*delay with gain mix*feedback^(k-1).
+    The output is lengthened so the echoes can fade out instead of being cut off."""
+    x = np.atleast_2d(audio).astype(np.float32)
+    fb, wet = max(0.0, min(0.9, feedback / 100.0)), max(0.0, min(1.0, mix / 100.0))
+    if wet == 0:
+        return audio
+    d = max(1, int(round(delay_ms / 1000.0 * sr)))
+    repeats = 1 if fb == 0 else min(40, int(np.ceil(np.log(0.002) / np.log(fb))))
+    repeats = max(1, min(repeats, int(max_tail_s * sr // d)))
+    n = x.shape[-1]
+    y = np.zeros((x.shape[0], n + repeats * d), np.float32)
+    y[:, :n] = x
+    for k in range(1, repeats + 1):
+        y[:, k * d:k * d + n] += x * (wet * fb ** (k - 1))
+    peak = float(np.abs(y).max())
+    return y * (0.98 / peak) if peak > 0.98 else y                                 # prevent clipping
+
+
 def pitch_tempo(p, report):
     path, fmt = p["file"], choice(p, "format", FORMATS, "wav")
     st, tempo = number(p, "semitones", -24, 24, 0), number(p, "tempo", 25, 400, 100)
     keep_pitch = choice(p, "keep_pitch", [True, False], True)
+    lofi_amount = number(p, "lofi", 0, 100, 0)
+    echo_delay = number(p, "echo_delay", 50, 1500, 300)
+    echo_feedback = number(p, "echo_feedback", 0, 85, 35)
+    echo_mix = number(p, "echo_mix", 0, 100, 0)
     report(0.05, "Reading audio...")
     audio = load_audio(path)
     rate = tempo / 100.0
     chans = []
     for i, ch in enumerate(audio):
-        report(0.1 + 0.8 * i / len(audio), f"Processing channel {i + 1} of {len(audio)}...")
+        report(0.1 + 0.7 * i / len(audio), f"Processing channel {i + 1} of {len(audio)}...")
         y = librosa.effects.pitch_shift(ch, sr=SR, n_steps=st) if st else ch
         if rate != 1:
             if keep_pitch:  # time-stretch: speed changes, key stays
@@ -343,10 +395,19 @@ def pitch_tempo(p, report):
             else:  # tape-style: play faster/slower, so pitch moves with speed
                 y = librosa.resample(y, orig_sr=round(SR * rate), target_sr=SR)
         chans.append(y)
+    out = np.stack(chans)
+    if lofi_amount:
+        report(0.82, "Adding lo-fi...")
+        out = lofi(out, lofi_amount)
+    if echo_mix:
+        report(0.87, "Adding echo...")
+        out = echo(out, echo_delay, echo_feedback, echo_mix)
     report(0.92, "Saving...")
     d, name = job_dir(path, "pitch")
     label = f"{rate:g}x speed{'' if keep_pitch else ' tape'}, {st:+g} st"
-    return _result(d, [("result", save_audio(np.stack(chans), d / f"{name} ({label})", fmt=fmt))])
+    label += f", lofi {lofi_amount:g}" if lofi_amount else ""
+    label += f", echo {echo_delay:g}ms" if echo_mix else ""
+    return _result(d, [("result", save_audio(out, d / f"{name} ({label})", fmt=fmt))])
 
 
 MAJOR = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])

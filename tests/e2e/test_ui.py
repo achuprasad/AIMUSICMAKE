@@ -262,6 +262,87 @@ def test_live_pitch_and_speed_preview(page, app_url, fixtures, errors):
     assert not errors
 
 
+def test_effect_controls_disabled_until_switched_on(page, app_url):
+    goto(page, app_url, "pitch")
+    expect(page.locator("#lofiAmt")).to_be_disabled()
+    for s in ("#echoDelay", "#echoFb", "#echoMix"):
+        expect(page.locator(s)).to_be_disabled()
+    page.check("#lofiOn")
+    expect(page.locator("#lofiAmt")).to_be_enabled()
+    expect(page.locator("#echoDelay")).to_be_disabled()
+    page.check("#echoOn")
+    for s in ("#echoDelay", "#echoFb", "#echoMix"):
+        expect(page.locator(s)).to_be_enabled()
+    page.locator("#echoDelay").fill("500")
+    expect(page.locator("#echoDelayVal")).to_have_text("500 ms")
+    page.locator("#lofiAmt").fill("80")
+    expect(page.locator("#lofiVal")).to_have_text("80")
+
+
+def test_effect_presets(page, app_url, errors):
+    goto(page, app_url, "pitch")
+    page.click('#fxPresets button[data-v="slowed"]')
+    expect(page.locator("#tp")).to_have_value("80")
+    expect(page.locator("#tpVal")).to_have_text("0.80×")
+    expect(page.locator("#keepPitch")).not_to_be_checked()
+    expect(page.locator("#echoOn")).to_be_checked()
+    expect(page.locator("#lofiOn")).not_to_be_checked()
+    expect(page.locator("#echoDelayVal")).to_have_text("450 ms")
+    expect(page.locator("#echoFbVal")).to_have_text("40%")
+    expect(page.locator("#echoMixVal")).to_have_text("35%")
+    page.click('#fxPresets button[data-v="chill"]')
+    expect(page.locator("#lofiOn")).to_be_checked()
+    expect(page.locator("#lofiVal")).to_have_text("55")
+    expect(page.locator("#tp")).to_have_value("85")
+    page.click('#fxPresets button[data-v="reset"]')
+    expect(page.locator("#tp")).to_have_value("100")
+    expect(page.locator("#keepPitch")).to_be_checked()
+    expect(page.locator("#lofiOn")).not_to_be_checked()
+    expect(page.locator("#echoOn")).not_to_be_checked()
+    assert not errors
+
+
+def test_live_lofi_and_echo_preview(page, app_url, fixtures, errors):
+    goto(page, app_url, "pitch")
+    drop(page, "pitch", fixtures["tone_wav"])
+    page.click('[data-drop="pitch"] .preview .play')
+    page.wait_for_function("SRC.pitch && SRC.pitch.fx && !SRC.pitch.audio.paused", timeout=10_000)
+    # both effects start switched off: no echo, no filtering, no noise
+    fx = "SRC.pitch.fx.nodes"
+    page.wait_for_function(f"{fx}.wet.gain.value < 0.001 && {fx}.lp.frequency.value > 19000")
+    page.check("#echoOn")
+    page.locator("#echoDelay").fill("250")
+    page.wait_for_function(f"Math.abs({fx}.delay.delayTime.value - 0.25) < 0.005"
+                           f" && Math.abs({fx}.wet.gain.value - 0.35) < 0.01")
+    page.check("#lofiOn")
+    page.wait_for_function(f"{fx}.lp.frequency.value < 7000 && {fx}.shaper.curve !== null && {fx}.ngain.gain.value > 0")
+    # the echo path really carries sound
+    rms = page.evaluate(f"""async () => {{
+        const an = SRC.pitch.ctx.createAnalyser(); an.fftSize = 2048; {fx}.wet.connect(an);
+        await new Promise(r => setTimeout(r, 700));
+        const d = new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
+        let s = 0; for (const v of d) s += v * v; return Math.sqrt(s / d.length);
+    }}""")
+    assert 0.005 < rms < 1.0, f"echo RMS {rms}"
+    # switching off silences the effects again
+    page.uncheck("#echoOn")
+    page.uncheck("#lofiOn")
+    page.wait_for_function(f"{fx}.wet.gain.value < 0.001 && {fx}.ngain.gain.value < 0.0005 && {fx}.shaper.curve === null")
+    assert not errors
+
+
+def test_render_with_lofi_and_echo(page, app_url, fixtures, errors):
+    goto(page, app_url, "pitch")
+    drop(page, "pitch", fixtures["tone_wav"])
+    page.check("#lofiOn")
+    page.check("#echoOn")
+    page.locator("#echoDelay").fill("200")
+    page.click("#pitchGo")
+    expect(page.locator("#pitchRes")).to_contain_text("lofi 60", timeout=60_000)
+    expect(page.locator("#pitchRes")).to_contain_text("echo 200ms")
+    assert not errors
+
+
 def test_removing_file_stops_preview(page, app_url, fixtures):
     goto(page, app_url, "pitch")
     drop(page, "pitch", fixtures["tone_wav"])

@@ -185,7 +185,9 @@ class TestJobs:
         assert dl.status_code == 200 and len(dl.content) == f["size"]
 
     @pytest.mark.parametrize("tool,params", [
-        ("analyze", {}), ("pitch", {"semitones": -2, "format": "mp3"}), ("convert", {"format": "ogg"}),
+        ("analyze", {}), ("pitch", {"semitones": -2, "format": "mp3"}),
+        ("pitch", {"tempo": 85, "lofi": 55, "echo_delay": 350, "echo_feedback": 30, "echo_mix": 25, "format": "wav"}),
+        ("convert", {"format": "ogg"}),
         ("cut", {"start": 0, "end": 1, "format": "flac"}),
     ])
     def test_every_file_tool(self, client, fixtures, tool, params):
