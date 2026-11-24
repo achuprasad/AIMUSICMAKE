@@ -97,6 +97,8 @@ def main(exe):
             ("convert", {"format": "mp3"}, ".mp3"),
             ("convert", {"format": "ogg"}, ".ogg"),
             ("pitch", {"semitones": 2, "tempo": 125, "format": "wav"}, ".wav"),
+            ("pitch", {"tempo": 85, "lofi": 55, "echo_delay": 350, "echo_feedback": 30, "echo_mix": 25,
+                       "format": "mp3"}, ".mp3"),
             ("analyze", {}, None),
             ("separate", {"engine": "bs_roformer", "speed": "fast", "format": "wav"}, "vocals"),
             ("separate", {"engine": "demucs", "stems": 4, "speed": "fast", "format": "mp3"}, "drums"),
