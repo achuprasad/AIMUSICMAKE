@@ -1,0 +1,16 @@
+# NVIDIA GPU override. Needs the NVIDIA driver on the host and the NVIDIA Container Toolkit
+# (Docker Desktop on Windows: WSL 2 backend with a current NVIDIA driver).
+#   docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+services:
+  mixlumo:
+    build:
+      args:
+        TORCH_INDEX: https://download.pytorch.org/whl/cu118
+    image: mixlumo:gpu
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]

@@ -1,0 +1,26 @@
+# Mixlumo web app.
+#   CPU:         docker compose up -d --build
+#   NVIDIA GPU:  docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build
+# Then open http://localhost:7860
+# Optional private settings (feedback e-mail, SMTP): copy .env.example to .env; it is read below.
+services:
+  mixlumo:
+    build:
+      context: .
+      args:
+        TORCH_INDEX: https://download.pytorch.org/whl/cpu
+    image: mixlumo:cpu
+    ports:
+      - "${PORT:-7860}:7860"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # The container always listens on 7860 internally; PORT above only changes the host side.
+      PORT: "7860"
+    volumes:
+      - mixlumo-data:/data      # models (downloaded once), results, uploads, feedback
+    restart: unless-stopped
+
+volumes:
+  mixlumo-data:

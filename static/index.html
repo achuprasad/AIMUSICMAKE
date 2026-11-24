@@ -253,6 +253,7 @@ details.faq[open] summary::after{content:"\2212"}
 details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
 .toast{position:fixed;bottom:22px;right:22px;background:var(--surface-3);border:1px solid var(--border-2);padding:11px 16px;border-radius:11px;box-shadow:var(--shadow);transform:translateY(120%);opacity:0;transition:.25s;z-index:9;font-weight:500}
 .toast.show{transform:none;opacity:1}
+body.web [data-open]{display:none}  /* web version: results are downloaded, there is no server folder to open */
 @media (max-width:980px){.app{grid-template-columns:minmax(0,1fr)}.side{position:static;height:auto}.grid{grid-template-columns:minmax(0,1fr)}main{padding:20px}.kv{grid-template-columns:1fr 1fr}.stem{grid-template-columns:1fr}}
 </style>
 </head>
@@ -288,7 +289,7 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
         <div class="swatches" id="accentSw" role="group" aria-label="Accent colour"></div>
       </div>
       <div class="device"><div class="row"><span class="dot" id="devdot"></span><span id="devname">Detecting…</span></div><small id="devsub">Processing engine</small></div>
-      <button class="btn" onclick="openFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Output folder</button>
+      <button class="btn" data-open onclick="openFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Output folder</button>
       <div class="legal">&copy; 2026 Achu Prasad. All rights reserved.<br>Mixlumo v<span id="appVersion">1.2.1</span></div>
     </div>
   </aside>
@@ -490,7 +491,7 @@ async function api(url, body) {
   return r.json();
 }
 let INFO = {};
-api("/api/info").then(i => { INFO = i; $("#devname").textContent = i.device === "cuda" ? i.gpu : "CPU mode"; $("#devsub").textContent = i.device === "cuda" ? "GPU acceleration on" : "No GPU found — slower";
+api("/api/info").then(i => { INFO = i; document.body.classList.toggle("web", !!i.web); $("#devname").textContent = i.device === "cuda" ? i.gpu : "CPU mode"; $("#devsub").textContent = i.device === "cuda" ? "GPU acceleration on" : "No GPU found — slower";
   if (i.device !== "cuda") $("#devdot").style.background = "var(--warn)"; });
 function openFolder(path) { api("/api/open-folder", {path}).catch(e => toast(e.message)); }
 
@@ -652,7 +653,7 @@ class Mixer {
   render() {
     const h = this.host, r = this.res;
     h.className = "results show";
-    h.innerHTML = `<div class="res-head"><div><h2>Your stems are ready</h2><div class="sub">${r.files.length} stems · saved to ${r.folder}</div></div>
+    h.innerHTML = `<div class="res-head"><div><h2>Your stems are ready</h2><div class="sub">${r.files.length} stems${INFO.web ? "" : ` · saved to ${r.folder}`}</div></div>
       <div class="res-actions"><button class="btn" data-open>${ICON.folder}Open folder</button><button class="btn" data-export>${ICON.dl}Export mix</button></div></div>
       <div class="transport"><button class="play" data-play aria-label="Play all stems / pause">${ICON.play}</button><span class="time">0:00 / 0:00</span>
       <input type="range" class="seek" min="0" max="1000" value="0" aria-label="Playback position"><span class="hint" style="margin:0" data-status>Play all stems together · use M / S to mute or solo</span></div>

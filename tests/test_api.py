@@ -1,4 +1,5 @@
 """Integration tests for the HTTP API (server.py) via FastAPI's httpx TestClient."""
+import os
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -46,7 +47,8 @@ def test_index_page(client):
 
 def test_info(client):
     j = client.get("/api/info").json()
-    assert set(j) == {"device", "gpu", "output", "formats", "version"}
+    assert set(j) == {"device", "gpu", "output", "formats", "version", "web"}
+    assert j["web"] is False  # desktop/dev default; only the Docker image sets AUDIO_STUDIO_WEB=1
     assert j["device"] in ("cuda", "cpu") and j["formats"] == engine.FORMATS
     import feedback
     assert j["version"] == feedback.APP_VERSION   # the launcher compares it before reusing a running app
@@ -94,7 +96,19 @@ def test_second_instance_detects_port_in_use():
 
 def test_server_only_listens_on_localhost():
     src = Path(server.__file__).read_text(encoding="utf-8")
-    assert 'host="127.0.0.1"' in src and "0.0.0.0" not in src  # noqa: S104 - asserting it is NOT used
+    assert 'os.environ.get("AUDIO_STUDIO_HOST", "127.0.0.1")' in src and "host=HOST" in src
+    assert "0.0.0.0" not in src  # noqa: S104 - asserting it is NOT used; only the Docker image opts in
+    if "AUDIO_STUDIO_HOST" not in os.environ:
+        assert server.HOST == "127.0.0.1"
+
+
+def test_web_mode_disables_open_folder(client, monkeypatch):
+    opened = []
+    monkeypatch.setattr(server.os, "startfile", opened.append, raising=False)
+    monkeypatch.setattr(server.sys, "platform", "win32")
+    monkeypatch.setattr(server, "WEB", True)
+    assert client.get("/api/info").json()["web"] is True
+    assert client.post("/api/open-folder", json={}).status_code == 404 and not opened
 
 
 # ------------------------------------------------------------------ uploads

@@ -38,6 +38,11 @@ FILE_TOOLS = {"separate", "pitch", "analyze", "cut", "convert"}
 MAX_JOBS_KEPT = 200
 # Keep the last model on the GPU for back-to-back jobs, then give the GPU back.
 IDLE_UNLOAD_S = float(os.environ.get("AUDIO_STUDIO_IDLE_UNLOAD_S", "300"))
+# Web mode (Docker / server deployment): the browser runs on another machine, so features that act
+# on the server's own desktop (opening Explorer on the output folder) are switched off.
+WEB = os.environ.get("AUDIO_STUDIO_WEB") == "1"
+# Localhost only by default. The Docker image sets AUDIO_STUDIO_HOST so its port can be published.
+HOST = os.environ.get("AUDIO_STUDIO_HOST", "127.0.0.1")
 _last_activity = [time.perf_counter()]
 GPU_TOOLS = {"separate"}  # run in the worker process; everything else is CPU-only
 worker = GpuWorker()
@@ -119,7 +124,8 @@ def index():
 @app.get("/api/info")
 def info():
     return {"device": engine.DEVICE, "gpu": engine.GPU_NAME, "output": str(engine.OUT), "formats": engine.FORMATS,
-            "version": feedback.APP_VERSION}   # the desktop launcher only reuses a server of its own version
+            "version": feedback.APP_VERSION,   # the desktop launcher only reuses a server of its own version
+            "web": WEB}
 
 
 @app.post("/api/upload")
@@ -363,6 +369,8 @@ def vote(item: str, body: dict, request: Request):
 
 @app.post("/api/open-folder")
 def open_folder(body: dict):
+    if WEB:
+        raise HTTPException(404, "Not available in the web version. Use Download instead.")
     p = Path(body.get("path") or engine.OUT).resolve()
     if p != engine.OUT.resolve() and engine.OUT.resolve() not in p.parents:
         raise HTTPException(400, "Not an output folder")
@@ -378,7 +386,7 @@ def create_server(port):  # pragma: no cover - startup wiring; exercised by the 
     """Prepare a uvicorn server for this app. Caller runs it (blocking .run() or in a thread)."""
     clean_temp_files()
     threading.Thread(target=_idle_watcher, daemon=True).start()
-    config = uvicorn.Config(app, host="127.0.0.1", port=port, log_level="warning")
+    config = uvicorn.Config(app, host=HOST, port=port, log_level="warning")
     return uvicorn.Server(config)
 
 
@@ -390,5 +398,5 @@ if __name__ == "__main__":  # pragma: no cover - entry point; exercised by the e
     port = int(os.environ.get("PORT", "7860"))
     if port_in_use(port):
         sys.exit(f"Mixlumo is already running at http://127.0.0.1:{port} - open that instead.")
-    print(f"Mixlumo running at http://127.0.0.1:{port}  ({engine.GPU_NAME})", flush=True)
+    print(f"Mixlumo running at http://{HOST}:{port}  ({engine.GPU_NAME})", flush=True)
     create_server(port).run()

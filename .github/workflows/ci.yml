@@ -63,6 +63,32 @@ jobs:
       - name: Dependency audit (pip-audit)
         run: pip-audit --progress-spinner off
 
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build web image (CPU)
+        run: docker build -t mixlumo:ci .
+
+      - name: Smoke test the container
+        run: |
+          docker run -d --name mixlumo -p 7860:7860 mixlumo:ci
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:7860/api/info -o info.json; then break; fi
+            sleep 2
+          done
+          cat info.json
+          grep -q '"web":true' info.json
+          curl -fsS http://127.0.0.1:7860/ | grep -q '<title>Mixlumo'
+          docker exec mixlumo ffmpeg -version | head -1
+          docker image ls mixlumo:ci
+
+      - name: Container logs
+        if: always()
+        run: docker logs mixlumo || true
+
   secrets:
     runs-on: ubuntu-latest
     steps:

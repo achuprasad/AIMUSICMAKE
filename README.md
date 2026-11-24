@@ -32,6 +32,16 @@ Requirements: Windows 10/11 64-bit, about 8 GB free disk. An NVIDIA GPU is stron
 it also works on CPU, but much slower. Full guide, uninstalling and troubleshooting:
 [docs/windows-build.md](docs/windows-build.md).
 
+## Run as a web app (Docker)
+
+```bash
+docker compose up -d --build                                                # CPU
+docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d --build  # NVIDIA GPU
+```
+
+Then open http://localhost:7860. Models download on first use into the `mixlumo-data` volume. Details,
+settings, and what to do before exposing it publicly: [docs/docker.md](docs/docker.md).
+
 ## For developers
 
 ```powershell

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Added
+- **Web app in Docker**: multi-stage `Dockerfile` (CPU or NVIDIA GPU via `TORCH_INDEX`), `docker-compose.yml`
+  and a GPU override. Data lives in a `/data` volume; models download on first use. See `docs/docker.md`.
+- `AUDIO_STUDIO_WEB=1` (web mode: no "Open folder" buttons) and `AUDIO_STUDIO_HOST` (listen address,
+  still `127.0.0.1` by default; the image sets `0.0.0.0`).
+
 ### Fixed
 - Opening Mixlumo while an **older** Mixlumo was still running showed the old one (it reused whatever
   Mixlumo answered on port 7860), so after an update you could still be using the previous version.

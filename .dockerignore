@@ -1,0 +1,9 @@
+# Only the app code, static UI and requirements.txt go into the build context.
+*
+!requirements.txt
+!engine.py
+!gpu_worker.py
+!server.py
+!feedback.py
+!notify.py
+!static/
