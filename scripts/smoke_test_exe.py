@@ -1,4 +1,4 @@
-"""Smoke test for the frozen Windows app.  Usage: python scripts/smoke_test_exe.py <path to LocalAudioStudio.exe>
+"""Smoke test for the frozen Windows app.  Usage: python scripts/smoke_test_exe.py <path to Mixlumo.exe>
 
 Runs the exe as if on a fresh PC: empty user profile, no ffmpeg on PATH, temporary
 folders. Passes only if the bundled ffmpeg, models and Demucs weights are used and
@@ -83,7 +83,7 @@ def main(exe):
         check("exe starts and serves the API", info, f"in {time.time() - t:.0f}s, device={info and info['device']}")
         if not info:
             return 1
-        check("UI page is served", b"Local Audio Studio" in urllib.request.urlopen(URL, timeout=10).read())  # noqa: S310
+        check("UI page is served", b"Mixlumo" in urllib.request.urlopen(URL, timeout=10).read())  # noqa: S310
 
         sr = 44100
         tt = np.arange(sr * 8) / sr
@@ -114,7 +114,7 @@ def main(exe):
 
         leaked = [p for p in (profile / ".audiostudio" / "models", profile / ".cache" / "torch") if p.exists()]
         check("no model downloads (everything came from the bundle)", not leaked, str(leaked))
-        log = profile / "AppData" / "Local" / "LocalAudioStudio" / "logs" / "app.log"
+        log = profile / "AppData" / "Local" / "Mixlumo" / "logs" / "app.log"
         check("log file written", log.exists(), str(log))
     finally:
         subprocess.run(["taskkill", "/PID", str(proc.pid), "/T", "/F"], capture_output=True, check=False)

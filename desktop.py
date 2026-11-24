@@ -1,12 +1,13 @@
-"""Windows desktop entry point for Local Audio Studio.
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
+"""Windows desktop entry point for Mixlumo.
 
 Starts the local server in the background and opens the UI in its own window
 (Microsoft Edge "app mode": no address bar or tabs; Edge ships with Windows 10/11).
 Closing the window stops the server and the AI engine.
 
-    LocalAudioStudio.exe                 normal start
-    LocalAudioStudio.exe --server-only   no window (used by automated tests)
-    LocalAudioStudio.exe --port 7861     use another port
+    Mixlumo.exe                 normal start
+    Mixlumo.exe --server-only   no window (used by automated tests)
+    Mixlumo.exe --port 7861     use another port
 """
 import argparse
 import multiprocessing
@@ -21,7 +22,7 @@ import urllib.request
 import webbrowser
 from pathlib import Path
 
-APP_NAME = "Local Audio Studio"
+APP_NAME = "Mixlumo"
 DEFAULT_PORT = 7860
 
 
@@ -32,7 +33,7 @@ def bundle_dir():
 
 def data_dir():
     """Per-user writable folder for logs and the window profile."""
-    d = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "LocalAudioStudio"
+    d = Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Mixlumo"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -114,7 +115,7 @@ def open_window(url, profile_dir):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="LocalAudioStudio")
+    ap = argparse.ArgumentParser(prog="Mixlumo")
     ap.add_argument("--server-only", action="store_true", help="run without opening a window")
     ap.add_argument("--port", type=int, default=int(os.environ.get("PORT", DEFAULT_PORT)))
     args = ap.parse_args(argv)
@@ -124,7 +125,7 @@ def main(argv=None):
         if is_our_app(url) and not args.server_only:
             open_window(url, data_dir() / "window-profile")  # already running: just show it
             return 0
-        print(f"Port {args.port} is used by another program. Try: LocalAudioStudio.exe --port {args.port + 1}",
+        print(f"Port {args.port} is used by another program. Try: Mixlumo.exe --port {args.port + 1}",
               file=sys.stderr)
         return 2
 

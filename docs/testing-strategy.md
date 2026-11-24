@@ -1,6 +1,6 @@
-# Testing strategy — Local Audio Studio
+# Testing strategy — Mixlumo
 
-Local Audio Studio is a **single-user desktop web app**: a FastAPI server bound to
+Mixlumo is a **single-user desktop web app**: a FastAPI server bound to
 `127.0.0.1`, a vanilla-JS single-page UI, and an engine that runs AI separation models
 (BS-RoFormer, Mel-Band RoFormer, Demucs) on the local GPU. There are no accounts, no
 database, no cloud storage and no billing. This document maps the project's testing

@@ -1,4 +1,4 @@
-# Test cases — Local Audio Studio
+# Test cases — Mixlumo
 
 Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality gate of 2026-11-23 22:57 passed every case below except `tests/test_desktop.py`, which was added afterwards and passed in its own run (10/10). The packaged app is also tested by `scripts/smoke_test_exe.py` and `scripts/test-installer.ps1` (see progress.md). UI tests run once per browser (Chromium and Microsoft Edge).
 

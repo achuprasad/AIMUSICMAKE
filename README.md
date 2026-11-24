@@ -1,4 +1,4 @@
-# Local Audio Studio (AI Music Editor)
+# Mixlumo — AI Vocal Remover & Music Editor
 
 AI vocal remover, stem splitter and audio toolkit for Windows. Today it runs **entirely on the
 user's PC** and uses the local NVIDIA GPU. It is the working core of the planned AI Music Editor
@@ -22,11 +22,11 @@ See [docs/audio-quality-benchmarks.md](docs/audio-quality-benchmarks.md).
 
 ## For users: install the Windows app
 
-1. Get `LocalAudioStudio-Setup-<version>.exe` **and** its `.bin` files (the installer is split
+1. Get `Mixlumo-Setup-<version>.exe` **and** its `.bin` files (the installer is split
    because it's over 2 GB) from the release, all in one folder.
 2. Run the `.exe`. No administrator rights are needed; it installs to
-   `%LOCALAPPDATA%\Programs\Local Audio Studio`.
-3. Start **Local Audio Studio** from the Start menu. Results are saved to `Music\Local Audio Studio`.
+   `%LOCALAPPDATA%\Programs\Mixlumo`.
+3. Start **Mixlumo** from the Start menu. Results are saved to `Music\Mixlumo`.
 
 Requirements: Windows 10/11 64-bit, about 8 GB free disk. An NVIDIA GPU is strongly recommended;
 it also works on CPU, but much slower. Full guide, uninstalling and troubleshooting:

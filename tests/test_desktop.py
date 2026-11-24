@@ -43,7 +43,7 @@ def test_user_override_of_models_is_respected(tmp_path, clean_env, monkeypatch):
 
 def test_data_dir_is_per_user(tmp_path, monkeypatch):
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
-    assert desktop.data_dir() == tmp_path / "LocalAudioStudio" and desktop.data_dir().is_dir()
+    assert desktop.data_dir() == tmp_path / "Mixlumo" and desktop.data_dir().is_dir()
 
 
 def test_bundle_dir_frozen_and_source(monkeypatch, tmp_path):
@@ -59,7 +59,7 @@ def test_redirect_output_writes_log(tmp_path, monkeypatch):
     print("hello from the test")
     log.flush()
     text = (tmp_path / "logs" / "app.log").read_text(encoding="utf-8")
-    assert "Local Audio Studio started" in text and "hello from the test" in text
+    assert "Mixlumo started" in text and "hello from the test" in text
     log.close()
 
 

@@ -1,4 +1,4 @@
-# One-time developer setup for Local Audio Studio (Windows 10/11).
+# One-time developer setup for Mixlumo (Windows 10/11).
 #   .\scripts\setup.ps1                   Python env + dependencies + test browser
 #   .\scripts\setup.ps1 -DownloadModels   also download the AI models (~1.7 GB) for offline use / builds
 #   .\scripts\setup.ps1 -Cpu              force CPU-only PyTorch (no NVIDIA GPU)

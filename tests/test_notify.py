@@ -43,7 +43,7 @@ class TestMessage:
     def test_plain_text_with_everything_needed(self):
         msg = mailer().build(ROW)
         assert msg.get_content_type() == "text/plain" and not msg.is_multipart()
-        assert msg["Subject"] == "[Local Audio Studio] Bug report: Crash when splitting"
+        assert msg["Subject"] == "[Mixlumo] Bug report: Crash when splitting"
         assert msg["To"] == ", ".join(TO) and msg["Reply-To"] == "fan@example.com"
         text = msg.get_content()
         for part in ("FB-1234ABCD", "It stopped at 92 %.", "Second line.", "gpu: GTX 1650", "4 / 5"):

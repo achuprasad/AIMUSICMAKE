@@ -1,4 +1,4 @@
-# Local Audio Studio - full quality gate (the local equivalent of a CI pipeline).
+# Mixlumo - full quality gate (the local equivalent of a CI pipeline).
 #   .\run_tests.ps1              lint, types, unit, integration, e2e, security, build, coverage
 #   .\run_tests.ps1 -Gpu         + GPU model tests and the GPU browser journey (needed for a complete gate)
 #   .\run_tests.ps1 -Benchmark   + audio-quality benchmark (writes docs\audio-quality-benchmarks.md)
@@ -31,8 +31,8 @@ Invoke-Stage "1 Lint (ruff)"             { & "$V\ruff.exe" check engine.py serve
 Invoke-Stage "2 Type check (mypy)"       { & $Py -m mypy engine.py server.py gpu_worker.py desktop.py notify.py feedback.py benchmarks\metrics.py benchmarks\audio_quality.py }
 Invoke-Stage "3 Unit tests"              { & $Py -m pytest tests\test_engine.py tests\test_engine_models.py tests\test_worker.py tests\test_desktop.py -q -p no:cacheprovider -rs @Cov }
 Invoke-Stage "4 Integration tests"       { & $Py -m pytest tests\test_api.py tests\test_feedback.py tests\test_notify.py -q -p no:cacheprovider -rs @Cov }
-Invoke-Stage "5 Frontend e2e (Chromium)" { & $Py -m pytest tests\e2e\test_ui.py -q -p no:cacheprovider -rs --browser chromium }
-Invoke-Stage "5 Frontend e2e (Edge)"     { & $Py -m pytest tests\e2e\test_ui.py -q -p no:cacheprovider -rs --browser chromium --browser-channel msedge }
+Invoke-Stage "5 Frontend e2e (Chromium)" { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py -q -p no:cacheprovider -rs --browser chromium }
+Invoke-Stage "5 Frontend e2e (Edge)"     { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py -q -p no:cacheprovider -rs --browser chromium --browser-channel msedge }
 Invoke-Stage "6 Security (pip-audit)"    { & $Py -m pip_audit --progress-spinner off }
 Invoke-Stage "7 Build verification"      {
     # isolated folders: a build check must never touch the real app's uploads or output

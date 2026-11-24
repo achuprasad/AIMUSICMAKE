@@ -50,10 +50,10 @@ pyz = PYZ(a.pure)  # noqa: F821
 exe = EXE(  # noqa: F821
     pyz, a.scripts, [],
     exclude_binaries=True,
-    name="LocalAudioStudio",
+    name="Mixlumo",
     icon=str(ROOT / "packaging" / "icon.ico"),
-    console=False,          # windowed app; output goes to %LOCALAPPDATA%\LocalAudioStudio\logs\app.log
+    console=False,          # windowed app; output goes to %LOCALAPPDATA%\Mixlumo\logs\app.log
     upx=False,              # UPX corrupts CUDA DLLs and triggers antivirus false positives
     version=str(ROOT / "packaging" / "version_info.txt"),
 )
-coll = COLLECT(exe, a.binaries, a.datas, name="LocalAudioStudio", upx=False)  # noqa: F821
+coll = COLLECT(exe, a.binaries, a.datas, name="Mixlumo", upx=False)  # noqa: F821

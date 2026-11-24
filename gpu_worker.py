@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
 """Runs AI separation in a separate process.
 
 Why a process and not a thread: PyTorch keeps a CUDA context (~700 MB on a

@@ -1,4 +1,5 @@
-"""Audio processing engine for Local Audio Studio.
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
+"""Audio processing engine for Mixlumo.
 
 Every tool takes (params, report) where report(fraction 0..1, stage text)
 is called as work progresses, and returns a result dict.
@@ -21,7 +22,7 @@ import tqdm as _tqdm
 
 HOME = Path.home() / ".audiostudio"
 MODEL_DIR = Path(os.environ.get("AUDIO_STUDIO_MODELS", HOME / "models"))  # the desktop app points this at its bundled models
-OUT = Path(os.environ.get("AUDIO_STUDIO_OUT", Path.home() / "Music" / "Local Audio Studio"))
+OUT = Path(os.environ.get("AUDIO_STUDIO_OUT", Path.home() / "Music" / "Mixlumo"))
 OUT.mkdir(parents=True, exist_ok=True)
 SR = 44100
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"

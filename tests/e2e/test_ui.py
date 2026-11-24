@@ -22,7 +22,7 @@ def drop(page, name, *files):
 
 def test_loads_and_navigates(page, app_url, errors):
     page.goto(app_url)
-    expect(page).to_have_title("Local Audio Studio")
+    expect(page).to_have_title("Mixlumo — AI Vocal Remover & Music Editor")
     expect(page.locator("#devname")).to_have_text("CPU mode")
     for name, title in PAGES.items():
         page.click(f'nav button[data-page="{name}"]')

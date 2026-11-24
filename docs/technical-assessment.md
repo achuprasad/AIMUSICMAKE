@@ -1,4 +1,4 @@
-# Technical assessment — AI Music Editor (current codebase: "Local Audio Studio")
+# Technical assessment — AI Music Editor (current codebase: "Mixlumo")
 
 _Phases 1–2 of the master plan: inspection and gap analysis. Written 2026-11-23 from the
 code on disk, the test suite and live runs, not from the brief's description. No code was
@@ -121,7 +121,7 @@ flowchart LR
   subgraph Worker["gpu_worker.py — child process"]
     ENG["engine.separate()<br/>RoFormer · Demucs (PyTorch CUDA)"]
   end
-  Disk[("Local disk<br/>~/.audiostudio/uploads<br/>~/Music/Local Audio Studio")]
+  Disk[("Local disk<br/>~/.audiostudio/uploads<br/>~/Music/Mixlumo")]
   GPU[["NVIDIA GPU"]]
   UI -- "HTTP JSON + polling" --> API --> Q
   Q --> CPU

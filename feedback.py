@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
 """User feedback, suggestions, bug reports and roadmap votes.
 
 Storage is behind a small interface so the web deployment can swap the local
@@ -20,7 +21,7 @@ import uuid
 from collections import defaultdict, deque
 from pathlib import Path
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 
 CATEGORIES = {
     "feature": "Feature request",

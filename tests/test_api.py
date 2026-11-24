@@ -41,7 +41,7 @@ def run(client, tool, params):
 # ------------------------------------------------------------------ pages
 def test_index_page(client):
     r = client.get("/")
-    assert r.status_code == 200 and "Local Audio Studio" in r.text and "text/html" in r.headers["content-type"]
+    assert r.status_code == 200 and "Mixlumo" in r.text and "text/html" in r.headers["content-type"]
 
 
 def test_info(client):

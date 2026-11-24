@@ -1,18 +1,43 @@
 <!doctype html>
+<!-- Copyright (c) 2026 Achu Prasad. All rights reserved. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Local Audio Studio</title>
+<title>Mixlumo — AI Vocal Remover &amp; Music Editor</title>
+<meta name="description" content="Mixlumo: free AI vocal remover and music editor. Remove vocals, split stems (drums, bass, piano), change pitch and tempo, find key and BPM, cut, join and convert audio.">
+<meta name="application-name" content="Mixlumo">
+<meta property="og:title" content="Mixlumo — AI Vocal Remover &amp; Music Editor">
+<meta property="og:description" content="Remove vocals and split songs into stems with AI. Pitch, tempo, key &amp; BPM, cutter and more.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#6d5efc">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%236d5efc'/%3E%3Cpath d='M8 20v-8M12 24V8M16 18v-4M20 22V10M24 19v-6' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<script>
+  /* apply the saved theme before first paint (no flash of the wrong theme) */
+  (function () { var t = "system"; try { t = localStorage.getItem("las-theme") || "system"; } catch (e) {}
+    document.documentElement.setAttribute("data-theme", /^(light|dark|system)$/.test(t) ? t : "system"); })();
+</script>
 <style>
 :root{
   --bg:#0a0c11;--surface:#11141b;--surface-2:#161a23;--surface-3:#1c2130;--border:#222838;--border-2:#2c3346;
   --text:#e7eaf0;--muted:#8b93a7;--faint:#5d6578;--accent:#6d5efc;--accent-2:#4f8cff;--accent-soft:rgba(109,94,252,.14);
-  --ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--radius:14px;--shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6);
+  --ok:#22c55e;--warn:#f59e0b;--err:#ef4444;--radius:14px;
+  --accent-text:#a99fff;--accent-glow:var(--accent-glow);--accent-line:var(--accent-line);--accent-faint:var(--accent-faint);
+  --on-accent:#ffffff;--ok-text:#4ade80;--ok-strong:#bbf7d0;--err-text:#fca5a5;--warn-text:#fcd34d;--info-text:#7fb0ff;
+  --wave-dim:#3a4155;--play-bg:#ffffff;--play-fg:#000000;color-scheme:dark;--shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 30px -12px rgba(0,0,0,.6);
   --font:"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
   --mono:"Cascadia Mono",Consolas,ui-monospace,monospace;
 }
+:root[data-theme="light"]{--bg:#f4f6fb;--surface:#ffffff;--surface-2:#f3f5f9;--surface-3:#e8ebf2;--border:#e1e5ed;--border-2:#c9cfdb;
+  --text:#121622;--muted:#4f586b;--faint:#6b7386;--ok:#15803d;--warn:#b45309;--err:#dc2626;
+  --ok-text:#15803d;--ok-strong:#14532d;--err-text:#b91c1c;--warn-text:#92400e;--info-text:#1d4ed8;
+  --wave-dim:#c3c9d6;--play-bg:#121622;--play-fg:#ffffff;
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset,0 8px 24px -14px rgba(20,30,60,.25);color-scheme:light;}
+@media (prefers-color-scheme: light){:root[data-theme="system"]{--bg:#f4f6fb;--surface:#ffffff;--surface-2:#f3f5f9;--surface-3:#e8ebf2;--border:#e1e5ed;--border-2:#c9cfdb;
+  --text:#121622;--muted:#4f586b;--faint:#6b7386;--ok:#15803d;--warn:#b45309;--err:#dc2626;
+  --ok-text:#15803d;--ok-strong:#14532d;--err-text:#b91c1c;--warn-text:#92400e;--info-text:#1d4ed8;
+  --wave-dim:#c3c9d6;--play-bg:#121622;--play-fg:#ffffff;
+  --shadow:0 1px 0 rgba(255,255,255,.6) inset,0 8px 24px -14px rgba(20,30,60,.25);color-scheme:light;}}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased}
 button,input,select{font:inherit;color:inherit}
@@ -22,16 +47,27 @@ button{cursor:pointer}
 /* ---------- sidebar ---------- */
 .side{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 14px;position:sticky;top:0;height:100vh}
 .brand{display:flex;align-items:center;gap:11px;padding:2px 8px 22px}
-.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;box-shadow:0 6px 18px -6px rgba(109,94,252,.7)}
+.brand .logo{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:grid;place-items:center;box-shadow:0 6px 18px -6px var(--accent-glow)}
 .brand b{display:block;font-size:15px;letter-spacing:-.01em}
 .brand small{color:var(--muted);font-size:11.5px}
 .nav-label{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);padding:10px 10px 6px}
 .nav button{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border:0;background:none;border-radius:9px;color:var(--muted);text-align:left;font-weight:500;transition:.15s}
 .nav button:hover{background:var(--surface-2);color:var(--text)}
-.nav button.active{background:var(--accent-soft);color:#fff}
-.nav button.active svg{color:#a99fff}
+.nav button.active{background:var(--accent-soft);color:var(--text)}
+.nav button.active svg{color:var(--accent-text)}
 .nav svg{width:18px;height:18px;flex:none}
 .side-foot{margin-top:auto;display:grid;gap:10px}
+.appearance{border:1px solid var(--border);border-radius:11px;padding:10px;background:var(--surface-2)}
+.appearance .t{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:0 2px 7px}
+.appearance .seg button{padding:5px 4px;font-size:12px}
+.swatches{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;align-items:center}
+.swatch{width:22px;height:22px;border-radius:50%;border:2px solid var(--surface-2);box-shadow:0 0 0 1px var(--border-2);padding:0}
+.swatch.sel{box-shadow:0 0 0 2px var(--text)}
+.swatch-custom{position:relative;width:22px;height:22px;border-radius:50%;overflow:hidden;box-shadow:0 0 0 1px var(--border-2);
+  background:conic-gradient(red,yellow,lime,cyan,blue,magenta,red);cursor:pointer}
+.swatch-custom.sel{box-shadow:0 0 0 2px var(--text)}
+.swatch-custom input{position:absolute;inset:-6px;width:40px;height:40px;opacity:0;cursor:pointer}
+.legal{font-size:11px;color:var(--faint);line-height:1.45;padding:0 4px}
 .device{border:1px solid var(--border);border-radius:11px;padding:11px 12px;background:var(--surface-2)}
 .device .row{display:flex;align-items:center;gap:8px;font-weight:600;font-size:12.5px}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(34,197,94,.18)}
@@ -51,9 +87,9 @@ main{padding:30px 40px 60px;max-width:1180px;width:100%}
 .stack{display:grid;gap:18px}
 
 /* ---------- dropzone ---------- */
-.drop{border:1.5px dashed var(--border-2);border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:.2s;background:linear-gradient(180deg,rgba(109,94,252,.03),transparent)}
+.drop{border:1.5px dashed var(--border-2);border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:.2s;background:linear-gradient(180deg,var(--accent-faint),transparent)}
 .drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop .ic{width:46px;height:46px;border-radius:12px;background:var(--surface-3);display:grid;place-items:center;margin:0 auto 12px;color:#a99fff}
+.drop .ic{width:46px;height:46px;border-radius:12px;background:var(--surface-3);display:grid;place-items:center;margin:0 auto 12px;color:var(--accent-text)}
 .drop b{display:block;font-size:15px}
 .drop span{color:var(--muted);font-size:13px}
 .file{display:none;align-items:center;gap:14px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}
@@ -69,7 +105,7 @@ main{padding:30px 40px 60px;max-width:1180px;width:100%}
 .file-actions{display:flex;gap:6px;flex:none}
 .btn.sm{padding:6px 11px;font-size:12.5px;border-radius:8px;gap:5px}
 .btn.sm svg{width:14px;height:14px}
-.btn.danger:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);color:#fca5a5}
+.btn.danger:hover{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);color:var(--err-text)}
 .preview{margin-top:14px;display:none}
 .preview.show{display:block}
 
@@ -86,12 +122,12 @@ main{padding:30px 40px 60px;max-width:1180px;width:100%}
 .opt.sel .radio{border:5px solid var(--accent);background:#fff}
 .opt b{display:block;font-size:13.5px}
 .opt span{color:var(--muted);font-size:12.5px}
-.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px;background:rgba(34,197,94,.14);color:#4ade80}
-.tag.b{background:rgba(79,140,255,.15);color:#7fb0ff}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;margin-left:6px;vertical-align:1px;background:rgba(34,197,94,.14);color:var(--ok-text)}
+.tag.b{background:rgba(79,140,255,.15);color:var(--info-text)}
 .seg{display:flex;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px}
 .seg button{flex:1;border:0;background:none;padding:7px 8px;border-radius:7px;color:var(--muted);font-weight:500;font-size:13px;transition:.15s}
 .seg button:hover{color:var(--text)}
-.seg button.sel{background:var(--surface-3);color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.4)}
+.seg button.sel{background:var(--surface-3);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.4)}
 .hint{color:var(--muted);font-size:12.5px;margin-top:7px}
 select,input[type=number]{width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:8px 11px;outline:none}
 select:focus,input:focus{border-color:var(--accent)}
@@ -101,7 +137,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-2);background:var(--surface-2);border-radius:10px;padding:9px 15px;font-weight:600;font-size:13.5px;transition:.15s;white-space:nowrap}
 .btn:hover{background:var(--surface-3)}
-.btn.primary{width:100%;padding:13px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-size:14.5px;box-shadow:0 8px 24px -10px rgba(109,94,252,.8)}
+.btn.primary{width:100%;padding:13px;border:0;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:var(--on-accent);font-size:14.5px;box-shadow:0 8px 24px -10px var(--accent-glow)}
 .btn.primary:hover{filter:brightness(1.08)}
 .btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
 .btn svg{width:16px;height:16px}
@@ -124,12 +160,12 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .steps{display:flex;gap:6px;margin-top:16px}
 .step{flex:1;display:flex;align-items:center;gap:7px;font-size:12px;color:var(--faint);padding:8px 10px;border-radius:9px;background:var(--surface-2);border:1px solid var(--border)}
 .step i{width:8px;height:8px;border-radius:50%;background:var(--border-2);flex:none}
-.step.on{color:var(--text);border-color:rgba(109,94,252,.5)}
+.step.on{color:var(--text);border-color:var(--accent-line)}
 .step.on i{background:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);animation:pulse 1.2s infinite}
 .step.ok{color:var(--muted)}
 .step.ok i{background:var(--ok)}
 @keyframes pulse{50%{opacity:.4}}
-.alert{display:none;margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#fca5a5;font-size:13px}
+.alert{display:none;margin-top:14px;padding:11px 13px;border-radius:10px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:var(--err-text);font-size:13px}
 .alert.show{display:block}
 
 /* ---------- results ---------- */
@@ -140,7 +176,7 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .res-head .sub{color:var(--muted);font-size:12.5px}
 .res-actions{display:flex;gap:8px;flex-wrap:wrap}
 .transport{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface-2);margin-bottom:10px}
-.play{width:42px;height:42px;border-radius:50%;border:0;background:#fff;color:#000;display:grid;place-items:center;flex:none;transition:.15s}
+.play{width:42px;height:42px;border-radius:50%;border:0;background:var(--play-bg);color:var(--play-fg);display:grid;place-items:center;flex:none;transition:.15s}
 .play:hover{transform:scale(1.05)}
 .play svg{width:18px;height:18px}
 .time{font-family:var(--mono);font-size:12.5px;color:var(--muted);min-width:96px}
@@ -154,8 +190,8 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .stem canvas{width:100%;height:48px;display:block;cursor:pointer}
 .stem .ctl{display:flex;align-items:center;gap:6px}
 .ms{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--surface-2);font-size:11.5px;font-weight:700;color:var(--muted)}
-.ms.on.m{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5);color:#fca5a5}
-.ms.on.s{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);color:#fcd34d}
+.ms.on.m{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.5);color:var(--err-text)}
+.ms.on.s{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.5);color:var(--warn-text)}
 .vol{width:92px}
 .single{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
 .single canvas{width:100%;height:56px;cursor:pointer}
@@ -187,8 +223,8 @@ input[type=text],input[type=email]{width:100%;background:var(--surface-2);border
 .stars button.on{color:#fbbf24;border-color:rgba(251,191,36,.45);background:rgba(251,191,36,.1)}
 .notice{padding:12px 14px;border-radius:11px;font-size:13px;margin-top:14px;display:none}
 .notice.show{display:block}
-.notice.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:#bbf7d0}
-.notice.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+.notice.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:var(--ok-strong)}
+.notice.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:var(--err-text)}
 .notice .btn{margin-top:10px}
 .rm{display:flex;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
 .rm .meta{flex:1;min-width:0}
@@ -196,7 +232,7 @@ input[type=text],input[type=email]{width:100%;background:var(--surface-2);border
 .rm .meta span{font-size:12px;color:var(--muted)}
 .vote{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:72px;padding:6px 8px;border-radius:10px;border:1px solid var(--border-2);background:var(--surface);color:var(--muted);font-weight:600;font-size:12px;line-height:1.2}
 .vote b{font-size:16px;color:var(--text)}
-.vote.on{border-color:var(--accent);background:var(--accent-soft);color:#c7c0ff}
+.vote.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
 .sub{padding:11px 13px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
 .sub .top{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
 .sub .top code{font-family:var(--mono);color:var(--text)}
@@ -219,7 +255,7 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
   <aside class="side">
     <div class="brand">
       <div class="logo"><svg width="20" height="20" viewBox="0 0 32 32"><path d="M6 20v-8M11 25V7M16 19v-6M21 23V9M26 19v-6" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg></div>
-      <div><b>Local Audio Studio</b><small>AI stem separation · offline</small></div>
+      <div><b>Mixlumo</b><small>AI stem separation · offline</small></div>
     </div>
     <div class="nav-label">Separation</div>
     <nav class="nav" id="nav">
@@ -238,8 +274,16 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
       <button data-page="support"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a8 8 0 0 1-11.6 7.2L4 21l1.8-5.4A8 8 0 1 1 21 12z"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6M12 16.5h.01"/></svg>Help &amp; Feedback</button>
     </nav>
     <div class="side-foot">
+      <div class="appearance" role="group" aria-label="Appearance">
+        <div class="t">Appearance</div>
+        <div class="seg" id="themeSeg" role="group" aria-label="Theme">
+          <button data-v="light" aria-label="Light theme">&#9728; Light</button><button data-v="dark" aria-label="Dark theme">&#9790; Dark</button><button data-v="system" aria-label="Follow Windows theme">Auto</button>
+        </div>
+        <div class="swatches" id="accentSw" role="group" aria-label="Accent colour"></div>
+      </div>
       <div class="device"><div class="row"><span class="dot" id="devdot"></span><span id="devname">Detecting…</span></div><small id="devsub">Processing engine</small></div>
       <button class="btn" onclick="openFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Output folder</button>
+      <div class="legal">&copy; 2026 Achu Prasad. All rights reserved.<br>Mixlumo v<span id="appVersion">1.1.0</span></div>
     </div>
   </aside>
 
@@ -376,10 +420,11 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
       <div class="card" style="margin-top:18px"><h3>Frequently asked questions</h3>
         <details class="faq"><summary>Which AI model should I use to remove vocals?</summary><div><b>BS-RoFormer</b> gives the cleanest vocal/instrumental split (12.5 dB vocal SDR measured on the MUSDB18 test set). <b>Mel-Band RoFormer</b> can sound more natural on some voices. Use <b>Demucs</b> when you need drums, bass, guitar or piano as separate stems.</div></details>
         <details class="faq"><summary>How long does a song take?</summary><div>With an NVIDIA GPU and the default <b>Fast</b> speed, about 0.6&ndash;0.7 seconds per second of music: roughly 3 minutes for a 4&ndash;5 minute song. <b>Max</b> takes about 3&times; longer for a difference you can't hear. Without an NVIDIA GPU it runs on the processor and is much slower.</div></details>
-        <details class="faq"><summary>Are my songs uploaded to the internet?</summary><div>No. In the Windows app everything runs on your own computer; your audio never leaves it. Uploads are deleted every time the app starts. Results are saved to <code>Music\Local Audio Studio</code>.</div></details>
+        <details class="faq"><summary>Are my songs uploaded to the internet?</summary><div>No. In the Windows app everything runs on your own computer; your audio never leaves it. Uploads are deleted every time the app starts. Results are saved to <code>Music\Mixlumo</code>.</div></details>
         <details class="faq"><summary>Which files can I use?</summary><div>Almost any audio or video file: MP3, WAV, FLAC, M4A, OGG, AAC, MP4, MKV, MOV and more, up to 1 GB. You can save results as WAV, MP3, FLAC, OGG or M4A.</div></details>
         <details class="faq"><summary>Can I hear changes before I download?</summary><div>Yes. Every uploaded song has a play button. On <b>Pitch &amp; Tempo</b> the speed and pitch sliders change the sound live while it plays; <b>Apply changes</b> then renders the full-quality file.</div></details>
         <details class="faq"><summary>&ldquo;The AI engine stopped unexpectedly&rdquo; &mdash; what now?</summary><div>Usually the graphics card ran out of memory or its driver restarted. Close games or other AI apps and try again, or use the <b>Fast</b> speed or Demucs. The app keeps running; the next job starts a fresh AI engine.</div></details>
+        <details class="faq"><summary>About &amp; licences</summary><div><b>Mixlumo</b> v<span class="appVersion2">1.1.0</span><br>&copy; 2026 Achu Prasad. All rights reserved. The source code is public to read but not licensed for reuse.<br>Built with open-source software and AI models that have their own licences (PyTorch, Demucs, audio-separator, FFmpeg and others): see <a href="https://github.com/achuprasad/AIMUSICMAKE/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer">third-party notices</a>.</div></details>
         <details class="faq"><summary>Can I use the results commercially?</summary><div>The app claims no rights in your audio, but separating a song does not give you rights to it: you still need permission from the copyright owners of the original recording.</div></details>
       </div>
     </section>
@@ -442,20 +487,23 @@ function picker(el, onChange) {
 }
 
 /* ---------- waveform drawing ---------- */
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const REDRAW = new Set();  // waveform painters, repainted when the theme changes
 function drawWave(canvas, peaks, color, progress = 0, region = null) {
+  color = color === "accent" ? cssVar("--accent-wave") || "#8b7dff" : color;
   const dpr = devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
   if (canvas.width !== w * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
   const c = canvas.getContext("2d"); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, w, h);
-  if (region) { c.fillStyle = "rgba(109,94,252,.18)"; c.fillRect(region[0] * w, 0, (region[1] - region[0]) * w, h);
-    c.fillStyle = "#8b7dff"; c.fillRect(region[0] * w - 1, 0, 2, h); c.fillRect(region[1] * w - 1, 0, 2, h); }
+  if (region) { c.fillStyle = cssVar("--accent-soft"); c.fillRect(region[0] * w, 0, (region[1] - region[0]) * w, h);
+    c.fillStyle = cssVar("--accent-wave") || "#8b7dff"; c.fillRect(region[0] * w - 1, 0, 2, h); c.fillRect(region[1] * w - 1, 0, 2, h); }
   const n = peaks.length, bw = w / n, mid = h / 2;
   for (let i = 0; i < n; i++) {
     const x = i * bw, v = Math.max(1, peaks[i] * (h / 2 - 2));
     const played = i / n < progress, inReg = !region || (i / n >= region[0] && i / n <= region[1]);
-    c.fillStyle = played ? color : inReg ? color + (region ? "cc" : "55") : "#3a4155";
+    c.fillStyle = played ? color : inReg ? color + (region ? "cc" : "55") : cssVar("--wave-dim");
     c.fillRect(x, mid - v, Math.max(1, bw - .6), v * 2);
   }
-  if (progress > 0 && progress < 1) { c.fillStyle = "#fff"; c.fillRect(progress * w - 1, 0, 2, h); }
+  if (progress > 0 && progress < 1) { c.fillStyle = cssVar("--text"); c.fillRect(progress * w - 1, 0, 2, h); }
 }
 async function peaksFromFile(file, n = 600) {
   const ctx = new OfflineAudioContext(1, 1, 44100);
@@ -507,7 +555,7 @@ $$("[data-drop]").forEach(host => {
       $(".meta span", fileEl).textContent = `${fmtSize(u.size)} · ${fmtT(u.duration)}`;
       $(".upbar", fileEl).style.display = "none";
       onSource(key, f);
-    } catch (e) { $(".meta span", fileEl).textContent = e.message; $(".meta span", fileEl).style.color = "#fca5a5"; }
+    } catch (e) { $(".meta span", fileEl).textContent = e.message; $(".meta span", fileEl).style.color = "var(--err-text)"; }
   }
 });
 
@@ -567,7 +615,7 @@ function singleResult(host, res, title) {
   audio.onplay = () => btn.innerHTML = ICON.pause; audio.onpause = audio.onended = () => btn.innerHTML = ICON.play;
   audio.ontimeupdate = audio.onloadedmetadata = draw;
   cv.onclick = e => { if (audio.duration) { audio.currentTime = e.offsetX / cv.clientWidth * audio.duration; draw(); } };
-  requestAnimationFrame(draw); addEventListener("resize", draw);
+  requestAnimationFrame(draw); addEventListener("resize", draw); REDRAW.add(draw);
 }
 
 /* ---------- stem mixer (synced Web Audio playback) ---------- */
@@ -600,7 +648,7 @@ class Mixer {
       $(".vol", row).oninput = e => { s.vol = +e.target.value; this.applyGains(); };
       s.cv.onclick = e => this.duration && this.seek(e.offsetX / s.cv.clientWidth);
     });
-    this.draw(); addEventListener("resize", () => this.draw());
+    this.draw(); addEventListener("resize", () => this.draw()); REDRAW.add(() => this.draw());
   }
   async load() {
     if (this.ctx) return;
@@ -731,6 +779,7 @@ class SourcePlayer {
     a.onpause = a.onended = () => { this.btn.innerHTML = ICON.play; this.draw(); };
     a.onloadedmetadata = () => this.draw();
     addEventListener("resize", () => this.draw());
+    REDRAW.add(() => this.draw());
     this.draw();
   }
   async ensureGraph() {
@@ -758,7 +807,7 @@ class SourcePlayer {
   tick() { this.draw(); if (!this.audio.paused) requestAnimationFrame(() => this.tick()); }
   draw() {
     const a = this.audio;
-    drawWave(this.cv, this.peaks, "#8b7dff", a.duration ? a.currentTime / a.duration : 0);
+    drawWave(this.cv, this.peaks, "accent", a.duration ? a.currentTime / a.duration : 0);
     this.timeEl.textContent = `${fmtT(a.currentTime)} / ${fmtT(a.duration)}`;
   }
 }
@@ -831,7 +880,7 @@ async function setupCut(file) {
   CUT = {peaks, duration, a: Math.min(1, +$("#cutS").value / duration), b: Math.min(1, +$("#cutE").value / duration)};
   drawCut();
 }
-function drawCut() { if (CUT) drawWave($("#cutCanvas"), CUT.peaks, "#8b7dff", 0, [CUT.a, CUT.b]); }
+function drawCut() { if (CUT) drawWave($("#cutCanvas"), CUT.peaks, "accent", 0, [CUT.a, CUT.b]); }
 (() => {
   const cv = $("#cutCanvas"); let down = null;
   cv.onmousedown = e => { if (!CUT) return; down = e.offsetX / cv.clientWidth; CUT.a = CUT.b = down; drawCut(); };
@@ -839,7 +888,7 @@ function drawCut() { if (CUT) drawWave($("#cutCanvas"), CUT.peaks, "#8b7dff", 0,
     CUT.a = Math.min(down, x); CUT.b = Math.max(down, x); $("#cutS").value = (CUT.a * CUT.duration).toFixed(1); $("#cutE").value = (CUT.b * CUT.duration).toFixed(1); drawCut(); });
   addEventListener("mouseup", () => { if (down != null && CUT && CUT.b - CUT.a < .002) { CUT.a = 0; CUT.b = 1; $("#cutS").value = 0; $("#cutE").value = CUT.duration.toFixed(1); drawCut(); } down = null; });
   const sync = () => { if (!CUT) return; CUT.a = Math.min(1, +$("#cutS").value / CUT.duration); CUT.b = Math.min(1, +$("#cutE").value / CUT.duration); drawCut(); };
-  $("#cutS").oninput = $("#cutE").oninput = sync; addEventListener("resize", drawCut);
+  $("#cutS").oninput = $("#cutE").oninput = sync; addEventListener("resize", drawCut); REDRAW.add(drawCut);
 })();
 $("#fi").oninput = e => $("#fiVal").textContent = e.target.value + " s";
 $("#fo").oninput = e => $("#foVal").textContent = e.target.value + " s";
@@ -858,7 +907,7 @@ async function addJoin(f) {
 function renderJoin() {
   const l = $("#joinList");
   l.innerHTML = JOIN.length ? JOIN.map((it, i) => `<div class="fitem"><span class="n">${i + 1}</span><div class="meta"><b>${it.name}</b>
-    <span style="${it.err ? "color:#fca5a5" : ""}">${it.err || (it.id ? `${fmtSize(it.size)} · ${fmtT(it.duration)}` : "Uploading…")}</span></div>
+    <span style="${it.err ? "color:var(--err-text)" : ""}">${it.err || (it.id ? `${fmtSize(it.size)} · ${fmtT(it.duration)}` : "Uploading…")}</span></div>
     <button class="iconbtn" data-up="${i}" title="Move up">↑</button><button class="iconbtn" data-dn="${i}" title="Move down">↓</button><button class="iconbtn" data-rm="${i}" title="Remove">${ICON.x}</button></div>`).join("")
     : `<div class="empty">No tracks yet. Tracks are joined from top to bottom.</div>`;
   $$("[data-up]", l).forEach(b => b.onclick = () => { const i = +b.dataset.up; if (i) { [JOIN[i - 1], JOIN[i]] = [JOIN[i], JOIN[i - 1]]; renderJoin(); } });
@@ -967,6 +1016,79 @@ async function loadRoadmap() {
 api("/api/support").then(s => { SUPPORT = s; }).catch(() => {});
 $$('.nav button[data-page="support"]').forEach(b => b.addEventListener("click", () => { loadRoadmap(); loadMine(); }));
 fbCounters();
+
+/* ---------- appearance: theme + accent colour ---------- */
+const ACCENTS = [["Violet", "#6d5efc"], ["Blue", "#2f7cf6"], ["Teal", "#0d9488"], ["Green", "#16a34a"],
+                 ["Orange", "#ea580c"], ["Pink", "#db2777"], ["Red", "#dc2626"]];
+const store = {get: k => { try { return localStorage.getItem(k); } catch { return null; } },
+               set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }};
+const hexOk = h => /^#[0-9a-fA-F]{6}$/.test(h || "");
+function hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255, g = parseInt(hex.slice(3, 5), 16) / 255, b = parseInt(hex.slice(5, 7), 16) / 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s2 = 0;
+  if (d) { s2 = d / (1 - Math.abs(2 * l - 1)); h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; h *= 60; if (h < 0) h += 360; }
+  return [h, s2, l];
+}
+function hslToHex(h, s2, l) {
+  const c = (1 - Math.abs(2 * l - 1)) * s2, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+  const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return "#" + [r, g, b].map(v => Math.round((v + m) * 255).toString(16).padStart(2, "0")).join("");
+}
+function luminance(hex) {
+  const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  return 0.2126 * f(parseInt(hex.slice(1, 3), 16)) + 0.7152 * f(parseInt(hex.slice(3, 5), 16)) + 0.0722 * f(parseInt(hex.slice(5, 7), 16));
+}
+const contrast = (a, b) => { const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const isLight = () => { const t = document.documentElement.getAttribute("data-theme");
+  return t === "light" || (t === "system" && matchMedia("(prefers-color-scheme: light)").matches); };
+function applyAccent(hex) {
+  if (!hexOk(hex)) hex = ACCENTS[0][1];
+  const [h, s2, l] = hexToHsl(hex), root = document.documentElement.style, light = isLight();
+  const rgb = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16)).join(",");
+  const bg = light ? "#ffffff" : "#11141b";
+  // readable accent text: walk lightness until it reaches WCAG AA (4.5:1) on the panel colour
+  let tl = light ? Math.min(l, 0.45) : Math.max(l, 0.72), text = hslToHex(h, Math.min(1, s2), tl);
+  for (let i = 0; i < 20 && contrast(text, bg) < 4.5; i++) { tl += light ? -0.03 : 0.03; text = hslToHex(h, Math.min(1, s2), Math.max(0, Math.min(1, tl))); }
+  root.setProperty("--accent", hex);
+  root.setProperty("--accent-2", hslToHex((h + 28) % 360, Math.min(1, s2), Math.min(0.7, Math.max(0.35, l + 0.06))));
+  root.setProperty("--accent-soft", `rgba(${rgb},${light ? 0.12 : 0.14})`);
+  root.setProperty("--accent-glow", `rgba(${rgb},${light ? 0.35 : 0.7})`);
+  root.setProperty("--accent-line", `rgba(${rgb},.5)`);
+  root.setProperty("--accent-faint", `rgba(${rgb},.03)`);
+  root.setProperty("--accent-text", text);
+  root.setProperty("--accent-wave", light ? hslToHex(h, Math.min(1, s2), Math.min(0.55, Math.max(0.4, l))) : hslToHex(h, Math.min(1, s2), Math.max(0.62, l)));
+  // text on accent buttons: black or white, whichever reads better
+  root.setProperty("--on-accent", contrast("#ffffff", hex) >= contrast("#111111", hex) ? "#ffffff" : "#111111");
+  REDRAW.forEach(f => { try { f(); } catch {} });
+}
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  store.set("las-theme", t);
+  $$("#themeSeg button").forEach(b => { b.classList.toggle("sel", b.dataset.v === t); b.setAttribute("aria-pressed", b.dataset.v === t); });
+  applyAccent(store.get("las-accent"));
+}
+function setAccent(hex) {
+  store.set("las-accent", hex);
+  $$("#accentSw .swatch").forEach(b => { const on = b.dataset.v === hex; b.classList.toggle("sel", on); b.setAttribute("aria-pressed", on); });
+  const custom = !ACCENTS.some(a => a[1] === hex);
+  $("#accentSw .swatch-custom").classList.toggle("sel", custom);
+  applyAccent(hex);
+}
+$("#accentSw").innerHTML = ACCENTS.map(([n, c]) =>
+  `<button class="swatch" data-v="${c}" style="background:${c}" aria-label="${n} accent" title="${n}" aria-pressed="false"></button>`).join("") +
+  `<label class="swatch-custom" title="Custom colour"><input type="color" id="accentCustom" aria-label="Custom accent colour" value="#6d5efc"></label>`;
+$$("#accentSw .swatch").forEach(b => b.onclick = () => setAccent(b.dataset.v));
+$("#accentCustom").oninput = e => setAccent(e.target.value.toLowerCase());
+$$("#themeSeg button").forEach(b => b.onclick = () => setTheme(b.dataset.v));
+matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => applyAccent(store.get("las-accent")));
+(() => {
+  const saved = store.get("las-accent");
+  if (hexOk(saved)) $("#accentCustom").value = saved;
+  setTheme(document.documentElement.getAttribute("data-theme") || "system");
+  setAccent(hexOk(saved) ? saved : ACCENTS[0][1]);
+})();
+api("/api/support").then(s => { $("#appVersion").textContent = s.version; $$(".appVersion2").forEach(e => e.textContent = s.version); }).catch(() => {});
 </script>
 </body>
 </html>

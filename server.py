@@ -1,4 +1,5 @@
-"""Local Audio Studio - web server. Run: python server.py  ->  http://127.0.0.1:7860"""
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
+"""Mixlumo - web server. Run: python server.py  ->  http://127.0.0.1:7860"""
 # ruff: noqa: I001 - import order is deliberate: private settings (.env) must load before engine/feedback import
 import os
 import shutil
@@ -25,7 +26,7 @@ ROOT = Path(__file__).resolve().parent
 # They are read here and never sent to the browser. Tests set AUDIO_STUDIO_NO_DOTENV=1.
 if os.environ.get("AUDIO_STUDIO_NO_DOTENV") != "1":
     notify.load_env_file(ROOT / ".env")
-    notify.load_env_file(Path(os.environ.get("LOCALAPPDATA", Path.home())) / "LocalAudioStudio" / "settings.env")
+    notify.load_env_file(Path(os.environ.get("LOCALAPPDATA", Path.home())) / "Mixlumo" / "settings.env")
 
 import engine  # noqa: E402 - after the environment is loaded
 import feedback  # noqa: E402
@@ -58,7 +59,7 @@ def port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(("127.0.0.1", port)) == 0
 
-app = FastAPI(title="Local Audio Studio")
+app = FastAPI(title="Mixlumo")
 
 # ------------------------------------------------------------------ request guards
 MAX_JSON_BODY = 64 * 1024
@@ -387,6 +388,6 @@ def shutdown():  # pragma: no cover - called by the desktop launcher on exit
 if __name__ == "__main__":  # pragma: no cover - entry point; exercised by the e2e suite in a subprocess
     port = int(os.environ.get("PORT", "7860"))
     if port_in_use(port):
-        sys.exit(f"Local Audio Studio is already running at http://127.0.0.1:{port} - open that instead.")
-    print(f"Local Audio Studio running at http://127.0.0.1:{port}  ({engine.GPU_NAME})", flush=True)
+        sys.exit(f"Mixlumo is already running at http://127.0.0.1:{port} - open that instead.")
+    print(f"Mixlumo running at http://127.0.0.1:{port}  ({engine.GPU_NAME})", flush=True)
     create_server(port).run()

@@ -1,18 +1,18 @@
-# Builds the offline Windows app (folder with LocalAudioStudio.exe) and the Setup.exe installer.
+# Builds the offline Windows app (folder with Mixlumo.exe) and the Setup.exe installer.
 #   .\scripts\build-windows.ps1                       full build: app folder + portable ZIP + installer
 #   .\scripts\build-windows.ps1 -SkipInstaller        app folder + ZIP only
 #   .\scripts\build-windows.ps1 -OutDir D:\release    choose where results go
 # Prerequisites: .\scripts\setup.ps1 has been run (Python env, models), Inno Setup 6 for the installer.
 param(
-    [string]$OutDir = "$env:USERPROFILE\Documents\LocalAudioStudio-Release",
-    [string]$Version = "1.0.0",
+    [string]$OutDir = "$env:USERPROFILE\Documents\Mixlumo-Release",
+    [string]$Version = "1.1.0",
     [switch]$SkipInstaller,
     [switch]$SkipZip
 )
 $ErrorActionPreference = "Continue"
 $Root = Split-Path -Parent $PSScriptRoot
 $Py = "$env:USERPROFILE\.audiostudio\venv\Scripts\python.exe"
-$Work = "$env:LOCALAPPDATA\LocalAudioStudioBuild"   # outside the repo: build output is ~5 GB
+$Work = "$env:LOCALAPPDATA\MixlumoBuild"   # outside the repo: build output is ~5 GB
 function Fail($msg) { Write-Host "BUILD FAILED: $msg" -ForegroundColor Red; exit 1 }
 
 # ---- 1. inputs -------------------------------------------------------------------------------
@@ -39,25 +39,25 @@ $env:LAS_FFMPEG = $ffmpeg; $env:LAS_MODELS = "$stage\models"; $env:LAS_TORCH_HOM
 # ---- 2. PyInstaller ------------------------------------------------------------------------------
 Write-Host "== PyInstaller (10-20 minutes) ==" -ForegroundColor Cyan
 & $Py -m PyInstaller --noconfirm --clean --log-level WARN --distpath "$Work\dist" --workpath "$Work\work" `
-    "$Root\packaging\LocalAudioStudio.spec"
+    "$Root\packaging\Mixlumo.spec"
 if ($LASTEXITCODE -ne 0) { Fail "PyInstaller exited with $LASTEXITCODE" }
-$App = "$Work\dist\LocalAudioStudio"
-if (-not (Test-Path "$App\LocalAudioStudio.exe")) { Fail "LocalAudioStudio.exe was not produced" }
+$App = "$Work\dist\Mixlumo"
+if (-not (Test-Path "$App\Mixlumo.exe")) { Fail "Mixlumo.exe was not produced" }
 $size = [math]::Round((Get-ChildItem $App -Recurse -File | Measure-Object Length -Sum).Sum / 1GB, 2)
 Write-Host "App folder: $App ($size GB)"
 
 # ---- 3. smoke test the frozen app (server only, offline resources, no window) ---------------------
 Write-Host "== Smoke test ==" -ForegroundColor Cyan
-& $Py "$Root\scripts\smoke_test_exe.py" "$App\LocalAudioStudio.exe"
+& $Py "$Root\scripts\smoke_test_exe.py" "$App\Mixlumo.exe"
 if ($LASTEXITCODE -ne 0) { Fail "smoke test of the built exe failed" }
 
 New-Item -ItemType Directory -Force $OutDir | Out-Null
 # ---- 4. portable ZIP -------------------------------------------------------------------------------
 if (-not $SkipZip) {
     Write-Host "== Portable ZIP ==" -ForegroundColor Cyan
-    $zip = "$OutDir\LocalAudioStudio-$Version-portable.zip"
+    $zip = "$OutDir\Mixlumo-$Version-portable.zip"
     Remove-Item $zip -ErrorAction SilentlyContinue
-    & tar.exe -a -c -f $zip -C "$Work\dist" LocalAudioStudio
+    & tar.exe -a -c -f $zip -C "$Work\dist" Mixlumo
     if ($LASTEXITCODE -ne 0) { Fail "ZIP creation failed" }
 }
 # ---- 5. installer ------------------------------------------------------------------------------

@@ -29,5 +29,5 @@ body:
     id: log
     attributes:
       label: Log (optional)
-      description: Last lines of %LOCALAPPDATA%\LocalAudioStudio\logs\app.log
+      description: Last lines of %LOCALAPPDATA%\Mixlumo\logs\app.log
       render: text

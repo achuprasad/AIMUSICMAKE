@@ -1,3 +1,4 @@
+# Copyright (c) 2026 Achu Prasad. All rights reserved. See LICENSE.
 """E-mail notifications for new feedback.
 
 Configuration comes ONLY from environment variables (or a private, git-ignored .env file
@@ -77,11 +78,11 @@ class Mailer:
         kind = {"feature": "Feature request", "suggestion": "Suggestion", "bug": "Bug report",
                 "question": "Question"}.get(row.get("category"), "Feedback")
         msg = EmailMessage()
-        msg["Subject"] = _one_line(f"[Local Audio Studio] {kind}: {row.get('title', '')}", 160)
+        msg["Subject"] = _one_line(f"[Mixlumo] {kind}: {row.get('title', '')}", 160)
         msg["From"] = self.sender
         msg["To"] = ", ".join(self.to)
         msg["Date"] = formatdate(localtime=True)
-        msg["Message-ID"] = make_msgid(domain="local-audio-studio")
+        msg["Message-ID"] = make_msgid(domain="mixlumo")
         if row.get("email"):  # user gave consent and a validated address: reply goes straight to them
             msg["Reply-To"] = row["email"]
         diag = row.get("diagnostics") or {}

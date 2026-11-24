@@ -58,7 +58,7 @@ jobs:
         run: coverage report --fail-under=85
 
       - name: End-to-end tests (Chromium)
-        run: pytest tests/e2e/test_ui.py -q -rs --browser chromium
+        run: pytest tests/e2e/test_ui.py tests/e2e/test_theme.py -q -rs --browser chromium
 
       - name: Dependency audit (pip-audit)
         run: pip-audit --progress-spinner off
