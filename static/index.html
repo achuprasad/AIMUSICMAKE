@@ -289,7 +289,7 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
       </div>
       <div class="device"><div class="row"><span class="dot" id="devdot"></span><span id="devname">Detecting…</span></div><small id="devsub">Processing engine</small></div>
       <button class="btn" onclick="openFolder()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Output folder</button>
-      <div class="legal">&copy; 2026 Achu Prasad. All rights reserved.<br>Mixlumo v<span id="appVersion">1.2.0</span></div>
+      <div class="legal">&copy; 2026 Achu Prasad. All rights reserved.<br>Mixlumo v<span id="appVersion">1.2.1</span></div>
     </div>
   </aside>
 
@@ -446,7 +446,7 @@ details.faq div{padding:0 14px 13px;color:var(--muted);font-size:13px}
         <details class="faq"><summary>Which files can I use?</summary><div>Almost any audio or video file: MP3, WAV, FLAC, M4A, OGG, AAC, MP4, MKV, MOV and more, up to 1 GB. You can save results as WAV, MP3, FLAC, OGG or M4A.</div></details>
         <details class="faq"><summary>Can I hear changes before I download?</summary><div>Yes. Every uploaded song has a play button. On <b>Pitch &amp; Tempo</b> the speed and pitch sliders change the sound live while it plays; <b>Apply changes</b> then renders the full-quality file.</div></details>
         <details class="faq"><summary>&ldquo;The AI engine stopped unexpectedly&rdquo; &mdash; what now?</summary><div>Usually the graphics card ran out of memory or its driver restarted. Close games or other AI apps and try again, or use the <b>Fast</b> speed or Demucs. The app keeps running; the next job starts a fresh AI engine.</div></details>
-        <details class="faq"><summary>About &amp; licences</summary><div><b>Mixlumo</b> v<span class="appVersion2">1.2.0</span><br>&copy; 2026 Achu Prasad. All rights reserved. The source code is public to read but not licensed for reuse.<br>Built with open-source software and AI models that have their own licences (PyTorch, Demucs, audio-separator, FFmpeg and others): see <a href="https://github.com/achuprasad/AIMUSICMAKE/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer">third-party notices</a>.</div></details>
+        <details class="faq"><summary>About &amp; licences</summary><div><b>Mixlumo</b> v<span class="appVersion2">1.2.1</span><br>&copy; 2026 Achu Prasad. All rights reserved. The source code is public to read but not licensed for reuse.<br>Built with open-source software and AI models that have their own licences (PyTorch, Demucs, audio-separator, FFmpeg and others): see <a href="https://github.com/achuprasad/AIMUSICMAKE/blob/main/THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer">third-party notices</a>.</div></details>
         <details class="faq"><summary>Can I use the results commercially?</summary><div>The app claims no rights in your audio, but separating a song does not give you rights to it: you still need permission from the copyright owners of the original recording.</div></details>
       </div>
     </section>
@@ -533,7 +533,9 @@ async function peaksFromFile(file, n = 600) {
   const d = buf.getChannelData(0), step = Math.floor(d.length / n) || 1, out = [];
   let max = 0;
   for (let i = 0; i < n; i++) { let m = 0; for (let j = i * step; j < (i + 1) * step && j < d.length; j += 4) m = Math.max(m, Math.abs(d[j])); out.push(m); max = Math.max(max, m); }
-  return {peaks: out.map(v => v / (max || 1)), duration: buf.duration};
+  let peak = 0;   // true sample peak over all channels (the live lo-fi level uses it, like the server)
+  for (let c = 0; c < buf.numberOfChannels; c++) { const x = buf.getChannelData(c); for (let i = 0; i < x.length; i++) { const v = x[i] < 0 ? -x[i] : x[i]; if (v > peak) peak = v; } }
+  return {peaks: out.map(v => v / (max || 1)), duration: buf.duration, peak, buffer: buf};
 }
 
 /* ---------- upload / dropzone ---------- */
@@ -749,32 +751,57 @@ function onSource(key, file) {
 }
 /* ---------- source player: listen to the upload before processing ---------- */
 // Real-time pitch shifter for the live preview: two crossfaded, modulated delay taps
-// (sin² windows sum to 1, so loudness stays constant). Preview quality only; the
-// downloaded file is rendered on the server at full quality.
+// (sin² windows sum to 1, so loudness stays constant). Each time a tap restarts, its start is
+// moved by up to S samples to where the waveform lines up with the other tap (WSOLA-style search).
+// Without that, the crossfade between out-of-phase taps detunes the result (measured: up to
+// ±25 cents, more on low notes). The downloaded file is rendered on the server at full quality.
 const PITCH_WORKLET = `
 class PitchShift extends AudioWorkletProcessor {
   static get parameterDescriptors() { return [{name: "ratio", defaultValue: 1, minValue: 0.25, maxValue: 4}]; }
-  constructor() { super(); this.W = 2048; this.N = 8192; this.buf = [new Float32Array(8192), new Float32Array(8192)]; this.w = 0; this.ph = 0; }
+  constructor() {
+    super(); this.W = 2048; this.N = 8192; this.S = 1024; this.L = 384;
+    this.buf = [new Float32Array(this.N), new Float32Array(this.N)]; this.mono = new Float32Array(this.N);
+    this.w = 0; this.ph = 0; this.off = [0, 0]; this.lastP = [0, 0.5];
+  }
+  delay(k) { return ((this.ph + k * 0.5) % 1) * this.W + 1 + this.off[k]; }
+  align(k) {   // pick off[k] so tap k starts in phase with tap j (which is at full volume now)
+    const j = 1 - k, M = this.N - 1, m = this.mono, L = this.L;
+    const pj = Math.round(this.w - this.delay(j)), base = this.w - (((this.ph + k * 0.5) % 1) * this.W + 1);
+    let best = 0, bestV = -Infinity;
+    for (let o = 0; o < this.S; o++) {
+      const pk = Math.round(base - o); let xy = 0, yy = 1e-9;
+      for (let n = 0; n < L; n += 2) { const b = m[(pk - n) & M]; xy += m[(pj - n) & M] * b; yy += b * b; }
+      const v = xy / Math.sqrt(yy);
+      if (v > bestV) { bestV = v; best = o; }
+    }
+    this.off[k] = best;
+  }
   process(inputs, outputs, params) {
     const inp = inputs[0], out = outputs[0], r = params.ratio[0];
     if (!inp || !inp.length) return true;
-    const n = out[0].length, bypass = Math.abs(r - 1) < 1e-4;
+    const n = out[0].length, bypass = Math.abs(r - 1) < 1e-4, M = this.N - 1;
     for (let i = 0; i < n; i++) {
       for (let c = 0; c < 2; c++) this.buf[c][this.w] = inp[Math.min(c, inp.length - 1)][i];
+      this.mono[this.w] = (this.buf[0][this.w] + this.buf[1][this.w]) * 0.5;
       if (bypass) { for (let c = 0; c < out.length; c++) out[c][i] = inp[Math.min(c, inp.length - 1)][i]; }
       else {
         this.ph += (1 - r) / this.W; this.ph -= Math.floor(this.ph);
+        for (let k = 0; k < 2; k++) {
+          const p = (this.ph + k * 0.5) % 1;
+          if (Math.abs(p - this.lastP[k]) > 0.5) this.align(k);   // tap k wrapped (its volume is zero here)
+          this.lastP[k] = p;
+        }
         for (let c = 0; c < out.length; c++) {
           const b = this.buf[Math.min(c, 1)]; let y = 0;
           for (let k = 0; k < 2; k++) {
-            const p = (this.ph + k * 0.5) % 1; let pos = this.w - (p * this.W + 1); if (pos < 0) pos += this.N;
-            const i0 = Math.floor(pos), f = pos - i0, s = b[i0] * (1 - f) + b[(i0 + 1) % this.N] * f;
+            const p = (this.ph + k * 0.5) % 1, pos = this.w - this.delay(k);
+            const i0 = Math.floor(pos), f = pos - i0, s = b[i0 & M] * (1 - f) + b[(i0 + 1) & M] * f;
             const g = Math.sin(Math.PI * p); y += s * g * g;
           }
           out[c][i] = y;
         }
       }
-      this.w = (this.w + 1) % this.N;
+      this.w = (this.w + 1) & M;
     }
     return true;
   }
@@ -784,6 +811,7 @@ const SRC = {};  // key -> SourcePlayer (also used by tests)
 function dropSourcePlayer(key) {
   const sp = SRC[key]; if (!sp) return;
   sp.audio.pause(); players.delete(sp.audio); URL.revokeObjectURL(sp.audio.src); if (sp.ctx) sp.ctx.close();
+  clearTimeout(sp.lofiTimer); sp.buffer = null;
   delete SRC[key];
 }
 class SourcePlayer {
@@ -820,8 +848,20 @@ class SourcePlayer {
     a.playbackRate = speed;
     a.preservesPitch = a.mozPreservesPitch = a.webkitPreservesPitch = keepPitch;
     if (this.node) this.node.parameters.get("ratio").setValueAtTime(Math.pow(2, semitones / 12), this.ctx.currentTime);
-    if (this.fx) this.fx.set(lofi, echo);
     this.settings = {speed, keepPitch, semitones, lofi, echo};
+    if (this.fx) this.fx.set(lofi, echo, this.lofiLevel(lofi));
+  }
+  lofiLevel(lofi) {   // same as engine.lofi(): 0.98 x original peak / peak after filters + saturation
+    if (!lofi || !this.buffer) return 1;
+    if (lofi in this.lofiLevels) return this.lofiLevels[lofi];
+    clearTimeout(this.lofiTimer);
+    this.lofiTimer = setTimeout(async () => {
+      const pk = await lofiPeakAfter(this.buffer, lofi / 100);
+      this.lofiLevels[lofi] = Math.min(1, 0.98 * this.srcPeak / (pk || 1));
+      if (this.fx && this.settings.lofi === lofi) this.fx.set(lofi, this.settings.echo, this.lofiLevels[lofi]);
+    }, 150);
+    const d = 1 + 2.5 * lofi / 100, P = this.srcPeak;   // estimate until measured (a few hundred ms)
+    return Math.min(1, 0.98 * P / (Math.tanh(d * P) / Math.tanh(d)));
   }
   async toggle() {
     if (!this.audio.paused) return this.audio.pause();
@@ -838,42 +878,82 @@ class SourcePlayer {
 async function previewSource(key, file) {
   const host = $(`[data-drop="${key}"] .preview`);
   try {
-    const {peaks} = await peaksFromFile(file, 400);
+    const {peaks, peak, buffer} = await peaksFromFile(file, 400);
     if (!SOURCES[key]) return;  // file was removed while decoding
     host.classList.add("show");
     SRC[key] = new SourcePlayer(host, file, peaks, key === "pitch");
+    if (key === "pitch") Object.assign(SRC[key], {srcPeak: peak || 1, buffer, lofiLevels: {}});
     if (key === "pitch") livePitch();
   } catch {}
 }
-/* Live lo-fi + echo for the preview (Web Audio). The downloaded file is rendered on the server. */
+/* Live lo-fi + echo for the preview (Web Audio). The downloaded file is rendered on the server.
+   Mirrors engine.lofi() and engine.echo(): same filters (2nd-order Butterworth high-pass, 4th-order
+   Butterworth low-pass = two biquads), same saturation/bit-crush curve, same hiss and crackle levels,
+   same output level (peak measured after the filters), same echo taps. Checked by measuring preview
+   against download (scripts/compare_preview.py). */
+// Web Audio takes a low/high-pass Q in dB, so convert the Butterworth Q values (0.7071, 0.5412, 1.3066)
+const biquad = (ctx, type, q) => { const f = ctx.createBiquadFilter(); f.type = type; f.Q.value = 20 * Math.log10(q); return f; };
+function satCurve(a) {   // tape saturation, exactly as the server
+  const n = 8192, out = new Float32Array(n), drive = 1 + 2.5 * a;
+  for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; out[i] = Math.tanh(drive * x) / Math.tanh(drive); }
+  return out;
+}
+function crushCurve(a) {   // bit-crush 16 -> 9 bits (the shaper also clips to -1..1, as the server does)
+  const levels = Math.pow(2, 16 - 7 * a), n = Math.min(65537, 4 * levels + 1), out = new Float32Array(n);
+  for (let i = 0; i < n; i++) out[i] = Math.round((i / (n - 1) * 2 - 1) * levels) / levels;
+  return out;
+}
+function lofiStage(ctx) {   // high-pass -> 4th-order low-pass -> saturation/bit-crush
+  const hp = biquad(ctx, "highpass", Math.SQRT1_2), lp = biquad(ctx, "lowpass", 0.5412), lp2 = biquad(ctx, "lowpass", 1.3066);
+  const shaper = ctx.createWaveShaper(), nyq = ctx.sampleRate / 2;
+  hp.frequency.value = 10; lp.frequency.value = lp2.frequency.value = nyq;
+  hp.connect(lp).connect(lp2).connect(shaper);
+  return {hp, lp, lp2, shaper, set(a, t = null) {
+    const fh = a ? 60 + 190 * a : 10, fl = a ? 12000 - 8800 * a : nyq;
+    if (t === null) { hp.frequency.value = fh; lp.frequency.value = lp2.frequency.value = fl; }
+    else { hp.frequency.setTargetAtTime(fh, t, .02); [lp, lp2].forEach(f => f.frequency.setTargetAtTime(fl, t, .02)); }
+    shaper.curve = a ? satCurve(a) : null;
+  }};
+}
+async function lofiPeakAfter(buffer, a) {   // peak of the song after the lo-fi filters + saturation
+  const oc = new OfflineAudioContext(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  const src = oc.createBufferSource(), st = lofiStage(oc);
+  src.buffer = buffer; st.set(a); src.connect(st.hp); st.shaper.connect(oc.destination); src.start();
+  const out = await oc.startRendering(); let pk = 0;
+  for (let c = 0; c < out.numberOfChannels; c++) { const x = out.getChannelData(c); for (let i = 0; i < x.length; i++) { const v = x[i] < 0 ? -x[i] : x[i]; if (v > pk) pk = v; } }
+  return pk;
+}
 function buildFx(ctx, input) {
-  const hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), shaper = ctx.createWaveShaper(), sum = ctx.createGain();
-  hp.type = "highpass"; lp.type = "lowpass"; hp.frequency.value = 10; lp.frequency.value = 20000;
-  input.connect(hp).connect(lp).connect(shaper).connect(sum);
-  // vinyl hiss/crackle: a looped noise buffer, silent until lo-fi is on
-  const len = ctx.sampleRate * 2, buf = ctx.createBuffer(2, len, ctx.sampleRate);
-  for (let c = 0; c < 2; c++) { const d = buf.getChannelData(c);
-    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * 0.3 + (Math.random() < 0.00025 ? (Math.random() * 2 - 1) * 4 : 0); }
-  const noise = ctx.createBufferSource(), nhp = ctx.createBiquadFilter(), ngain = ctx.createGain();
-  noise.buffer = buf; noise.loop = true; nhp.type = "highpass"; nhp.frequency.value = 2500; ngain.gain.value = 0;
-  noise.connect(nhp).connect(ngain).connect(sum); noise.start();
+  const stage = lofiStage(ctx), {hp, lp, lp2, shaper} = stage, sum = ctx.createGain(), level = ctx.createGain();
+  const crush = ctx.createWaveShaper();
+  input.connect(hp); shaper.connect(sum);
+  // vinyl hiss (white) and crackle (sparse pops, high-passed at 2.5 kHz): looped buffers, silent until lo-fi is on
+  const len = ctx.sampleRate * 4, hissBuf = ctx.createBuffer(2, len, ctx.sampleRate), popBuf = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const h = hissBuf.getChannelData(c), p = popBuf.getChannelData(c);
+    for (let i = 0; i < len; i++) {
+      h[i] = Math.sqrt(-2 * Math.log(1 - Math.random())) * Math.cos(2 * Math.PI * Math.random());   // unit Gaussian
+      if (Math.random() < 0.00025) p[i] = Math.random() * 2 - 1;
+    }
+  }
+  const src = buf => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; s.start(); return s; };
+  const hiss = ctx.createGain(), pops = ctx.createGain(), nhp = biquad(ctx, "highpass", Math.SQRT1_2);
+  nhp.frequency.value = 2500; hiss.gain.value = pops.gain.value = 0;
+  src(hissBuf).connect(hiss).connect(sum);
+  src(popBuf).connect(nhp).connect(pops).connect(sum);
   const delay = ctx.createDelay(1.5), fb = ctx.createGain(), wet = ctx.createGain();
   fb.gain.value = 0; wet.gain.value = 0;
-  sum.connect(ctx.destination);
-  sum.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(ctx.destination);
-  const curve = a => {   // saturation + bit-crush, same idea as the server version
-    const n = 4096, out = new Float32Array(n), drive = 1 + 2.5 * a, levels = Math.pow(2, 16 - 7 * a);
-    for (let i = 0; i < n; i++) { const x = i / (n - 1) * 2 - 1; out[i] = Math.round(Math.tanh(drive * x) / Math.tanh(drive) * levels) / levels; }
-    return out;
-  };
+  sum.connect(crush).connect(level); level.connect(ctx.destination);
+  level.connect(delay); delay.connect(fb).connect(delay); delay.connect(wet).connect(ctx.destination);
   return {
-    nodes: {hp, lp, shaper, ngain, delay, fb, wet},
-    set(lofi, echo) {
+    nodes: {hp, lp, lp2, shaper, crush, hiss, pops, level, ngain: hiss, delay, fb, wet},
+    set(lofi, echo, lofiLevel = 1) {
       const t = ctx.currentTime, a = Math.max(0, Math.min(1, (lofi || 0) / 100));
-      hp.frequency.setTargetAtTime(a ? 60 + 190 * a : 10, t, .02);
-      lp.frequency.setTargetAtTime(a ? 12000 - 8800 * a : 20000, t, .02);
-      shaper.curve = a ? curve(a) : null;
-      ngain.gain.setTargetAtTime(a ? 0.01 * a : 0, t, .02);
+      stage.set(a, t);
+      crush.curve = a ? crushCurve(a) : null;
+      hiss.gain.setTargetAtTime(0.003 * a, t, .02);
+      pops.gain.setTargetAtTime(0.12 * a, t, .02);
+      level.gain.setTargetAtTime(a ? lofiLevel : 1, t, .02);
       const on = echo && echo.mix > 0;
       if (on) delay.delayTime.setTargetAtTime(echo.delay / 1000, t, .02);
       fb.gain.setTargetAtTime(on ? Math.min(0.9, echo.feedback / 100) : 0, t, .02);

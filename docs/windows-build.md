@@ -53,7 +53,7 @@ release as they are. The portable ZIP (~3.6 GB) is **over** that limit: share it
 3. No administrator rights are needed: it installs per user to
    `%LOCALAPPDATA%\Programs\Mixlumo`, with a Start-menu entry and an optional desktop shortcut.
 
-Silent install (IT / testing): `Mixlumo-Setup-1.2.0.exe /VERYSILENT /CURRENTUSER`
+Silent install (IT / testing): `Mixlumo-Setup-1.2.1.exe /VERYSILENT /CURRENTUSER`
 
 ## Uninstall
 

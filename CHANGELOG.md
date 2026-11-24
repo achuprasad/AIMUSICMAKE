@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.2.1 — 2026-11-24
+
+### Fixed
+- **Key changes and keep-key speed changes lost loudness** in the downloaded file, worst on notes that
+  follow silence (most songs start with some): up to −23 dB at +12 semitones, −6 dB at 0.6×. The time
+  stretch now uses a phase-locked vocoder; notes keep their level within 0.1 dB and their exact pitch.
+- **Live preview now matches the downloaded file** (measured with `scripts/compare_preview.py`):
+  - Lo-fi tone colour: the preview used gentler filters (and Web Audio reads filter Q in dB); now the
+    same Butterworth filters as the file, within 0.1 dB per octave band.
+  - Lo-fi level: the preview was about 5 dB louder; it now measures the same level as the file.
+  - Lo-fi hiss and crackle: same kind and level of noise as the file; bit-crush after the noise in both.
+  - Live key shift was up to 25 cents out of tune (crossfade between out-of-phase taps); it now aligns
+    each crossfade to the waveform and matches the file to within 0.5 cents, down to 55 Hz.
+- New browser test: the "Lo-fi chill" preset's live preview and download must match in pitch, speed,
+  echo timing and level, tone colour, loudness and hiss.
+
 ## 1.2.0 — 2026-11-24
 
 ### Added

@@ -341,18 +341,57 @@ def lofi(audio, amount, sr=SR, seed=7):
     y = sosfilt(lp, sosfilt(hp, x, axis=-1), axis=-1)
     drive = 1 + 2.5 * a                                                            # warm saturation
     y = np.tanh(drive * y) / np.tanh(drive)
+    # Level: bring the filtered + saturated peak back to the song's original peak (minus 2 %), so lo-fi
+    # doesn't make the song louder or quieter. The live preview measures the same peak in the browser
+    # (static/index.html, lofiPeakAfter), so preview and file play at the same level.
+    gain = min(1.0, 0.98 * peak_in / (float(np.abs(y).max()) or 1.0))
     rng = np.random.default_rng(seed)
     n = y.shape[-1]
     hiss = rng.standard_normal((y.shape[0], n)).astype(np.float32) * 0.003 * a
     crackle = np.zeros((y.shape[0], n), np.float32)
-    pops = rng.random((y.shape[0], n)) < 0.00025 * a                               # ~6 pops/s at full amount
+    pops = rng.random((y.shape[0], n)) < 0.00025                                   # ~11 pops/s, louder with amount
     crackle[pops] = rng.uniform(-1, 1, int(pops.sum())) * 0.12 * a
     y = y + hiss + sosfilt(butter(2, 2500, btype="highpass", fs=sr, output="sos"), crackle, axis=-1)
-    y = np.clip(y, -1.0, 1.0)
     levels = 2 ** (16 - 7 * a)                                                     # bit-crush last: 16 -> 9 bits
-    y = np.round(y * levels) / levels
-    peak = float(np.abs(y).max()) or 1.0
-    return (y * min(1.0, peak_in / peak * 0.98)).astype(np.float32)                # keep the original level, never clip
+    y = np.round(np.clip(y, -1.0, 1.0) * levels) / levels * gain
+    peak = float(np.abs(y).max())
+    return (y * (0.98 / peak) if peak > 0.98 else y).astype(np.float32)           # never clip
+
+
+def time_stretch(y, rate, n_fft=2048, hop=512):
+    """Phase vocoder time-stretch (rate > 1 = faster) with identity phase locking (Laroche & Dolson 1999):
+    every bin keeps its phase offset to the nearest spectral peak. librosa's plain phase vocoder lets
+    neighbouring bins drift apart, which after any silence makes notes partly cancel for the rest of the
+    song (measured: -23 dB at +12 st, -6 dB at 0.6x on a tone after 3 s of silence)."""
+    S = librosa.stft(y, n_fft=n_fft, hop_length=hop)
+    nb, nf = S.shape
+    steps = np.arange(0, nf, rate)
+    S = np.pad(S, ((0, 0), (0, 2)))
+    mag, ang = np.abs(S), np.angle(S)
+    adv = 2 * np.pi * hop * np.arange(nb) / n_fft
+    bins = np.arange(nb)
+    out = np.empty((nb, len(steps)), np.complex64)
+    acc = ang[:, 0].copy()
+    for i, st in enumerate(steps):
+        j, a = int(st), st - int(st)
+        m = (1 - a) * mag[:, j] + a * mag[:, j + 1]
+        pk = np.flatnonzero((m[1:-1] > m[:-2]) & (m[1:-1] >= m[2:])) + 1
+        if len(pk):
+            owner = pk[np.searchsorted((pk[:-1] + pk[1:]) / 2, bins)]
+            ph = acc[owner] + ang[:, j] - ang[owner, j]
+        else:
+            ph = acc
+        out[:, i] = m * np.exp(1j * ph)
+        d = ang[:, j + 1] - ang[:, j] - adv
+        acc = ph + adv + d - 2 * np.pi * np.round(d / (2 * np.pi))
+    return librosa.istft(out, hop_length=hop, length=int(round(len(y) / rate))).astype(np.float32)
+
+
+def pitch_shift(y, semitones, sr=SR):
+    """Key change, same length: stretch by the pitch ratio, then resample back."""
+    r = 2.0 ** (semitones / 12)
+    z = librosa.resample(time_stretch(y, 1 / r), orig_sr=sr * r, target_sr=sr)
+    return librosa.util.fix_length(z, size=len(y)).astype(np.float32)
 
 
 def echo(audio, delay_ms, feedback, mix, sr=SR, max_tail_s=8.0):
@@ -388,10 +427,10 @@ def pitch_tempo(p, report):
     chans = []
     for i, ch in enumerate(audio):
         report(0.1 + 0.7 * i / len(audio), f"Processing channel {i + 1} of {len(audio)}...")
-        y = librosa.effects.pitch_shift(ch, sr=SR, n_steps=st) if st else ch
+        y = pitch_shift(ch, st) if st else ch
         if rate != 1:
             if keep_pitch:  # time-stretch: speed changes, key stays
-                y = librosa.effects.time_stretch(y, rate=rate)
+                y = time_stretch(y, rate)
             else:  # tape-style: play faster/slower, so pitch moves with speed
                 y = librosa.resample(y, orig_sr=round(SR * rate), target_sr=SR)
         chans.append(y)

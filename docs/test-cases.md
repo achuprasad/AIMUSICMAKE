@@ -1,8 +1,8 @@
 # Test cases — Mixlumo
 
-Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality gate (`run_tests.ps1 -Gpu`) of 2026-11-24 (release build of 1.2.0) passed every case below, nothing skipped. The packaged app is also tested by `scripts/smoke_test_exe.py` and `scripts/test-installer.ps1`. UI tests run once per browser (Chromium and Microsoft Edge).
+Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality gate (`run_tests.ps1 -Gpu`) of 2026-11-24 (release build of 1.2.1) passed every case below, nothing skipped. The packaged app is also tested by `scripts/smoke_test_exe.py` and `scripts/test-installer.ps1`. UI tests run once per browser (Chromium and Microsoft Edge).
 
-**347 test cases** in 11 files.
+**359 test cases** in 11 files.
 
 ## End-to-end — main journey on GPU (1)
 
@@ -12,7 +12,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 |---|---|
 | — | `test_split_with_live_progress_and_mixer` |
 
-## End-to-end — browser UI (Chromium + Edge) (33)
+## End-to-end — browser UI (Chromium + Edge) (34)
 
 `tests/e2e/test_ui.py` · Stage 5 of `run_tests.ps1`
 
@@ -39,6 +39,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_effect_controls_disabled_until_switched_on` |
 | — | `test_effect_presets` |
 | — | `test_live_lofi_and_echo_preview` |
+| — | `test_live_preview_sounds_like_the_download` |
 | — | `test_render_with_lofi_and_echo` |
 | — | `test_removing_file_stops_preview` |
 | — | `test_join_reorder_and_join` |
@@ -269,7 +270,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_wait_until_ready_times_out_quickly` |
 | — | `test_find_edge_returns_existing_path_or_none` |
 
-## Unit — audio engine (87)
+## Unit — audio engine (98)
 
 `tests/test_engine.py` · Stage 3 of `run_tests.ps1`
 
@@ -326,6 +327,17 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | TestPitchTempo | `test_tape_mode_slow_down` |
 | TestPitchTempo | `test_keep_pitch_must_be_boolean` |
 | TestPitchTempo | `test_no_change_is_identity_length` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params0]` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params1]` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params2]` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params3]` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params4]` |
+| TestPitchTempo | `test_key_and_stretch_keep_loudness[params5]` |
+| TestPitchTempo | `test_notes_after_silence_keep_their_level_and_pitch[12-1]` |
+| TestPitchTempo | `test_notes_after_silence_keep_their_level_and_pitch[3-1]` |
+| TestPitchTempo | `test_notes_after_silence_keep_their_level_and_pitch[-12-1]` |
+| TestPitchTempo | `test_notes_after_silence_keep_their_level_and_pitch[0-0.6]` |
+| TestPitchTempo | `test_notes_after_silence_keep_their_level_and_pitch[0-1.5]` |
 | TestPitchTempo | `test_out_of_range[params0]` |
 | TestPitchTempo | `test_out_of_range[params1]` |
 | TestPitchTempo | `test_out_of_range[params2]` |
@@ -443,6 +455,8 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | File deletion / temp cleanup | `test_delete_upload`, `test_removing_file_deletes_upload`, `test_size_limit` (no leftovers), `test_roformer_outputs_and_cleanup`, `TestSaveAudio::test_every_format_roundtrips` (no `.tmp.wav`), `test_clean_temp_files_only_on_explicit_call`, `test_importing_server_never_deletes_files` |
 | Output duration, sample rate, channels, encoding | `TestSaveAudio`, `TestCut`, `TestJoin`, `TestPitchTempo`, `TestConvert`, `test_every_format_in_worker_thread`, `test_two_stem_engines` |
 | Audio effects (lo-fi, echo) | `TestEffects` (level, length, bit depth, echo timing, tail cap), `test_effect_controls_disabled_until_switched_on`, `test_effect_presets`, `test_live_lofi_and_echo_preview`, `test_render_with_lofi_and_echo` |
+| Live preview matches the download (pitch, speed, echo, tone colour, loudness, hiss) | `test_live_preview_sounds_like_the_download`, `scripts/compare_preview.py` (9 cases) |
+| Key change / time stretch keep loudness and pitch (incl. after silence) | `test_key_and_stretch_keep_loudness`, `test_notes_after_silence_keep_their_level_and_pitch` |
 | Clipping, distortion | `test_clipping_is_prevented`, `test_pure_tone_is_not_distorted`, benchmark clipping check |
 | Vocal / instrument leakage, separation quality | `test_two_stem_engines`, `test_demucs_multistem`, `benchmarks/audio_quality.py` |
 | GPU memory | `test_gpu_memory_is_released_between_engines`, `test_two_stem_engines` (< 3800 MB), benchmark |

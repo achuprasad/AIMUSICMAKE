@@ -234,6 +234,31 @@ class TestPitchTempo:
         res = engine.pitch_tempo({"file": str(fixtures["tone_wav"]), "format": "wav"}, Rec())
         assert abs(sf.info(res["files"][0]["path"]).duration - 5.0) < 0.001
 
+    @pytest.mark.parametrize("params", [{"semitones": 12}, {"semitones": 3}, {"semitones": -12},
+                                        {"semitones": -5, "tempo": 90}, {"tempo": 125}, {"tempo": 60}])
+    def test_key_and_stretch_keep_loudness(self, fixtures, params):
+        """Changing key or speed (keep key) must not change loudness."""
+        x, _ = sf.read(str(fixtures["tone_wav"]))
+        res = engine.pitch_tempo({"file": str(fixtures["tone_wav"]), "format": "wav", **params}, Rec())
+        y, _ = sf.read(res["files"][0]["path"])
+        db = 20 * np.log10(np.sqrt(np.mean(y ** 2)) / np.sqrt(np.mean(x ** 2)))
+        assert abs(db) < 0.5, f"loudness changed by {db:+.1f} dB"
+
+    @pytest.mark.parametrize("st,rate", [(12, 1), (3, 1), (-12, 1), (0, 0.6), (0, 1.5)])
+    def test_notes_after_silence_keep_their_level_and_pitch(self, st, rate):
+        """Regression: librosa's phase vocoder lost up to 23 dB on notes that follow silence
+        (most songs start with some), because neighbouring bins drifted out of phase."""
+        t = np.arange(3 * SR) / SR
+        chord = sum(0.1 * np.sin(2 * np.pi * f * t) for f in (220, 277.18, 329.63, 440))
+        x = np.concatenate([np.zeros(2 * SR), chord]).astype(np.float32)
+        y = engine.pitch_shift(x, st) if st else engine.time_stretch(x, rate)
+        n = int(1.5 * SR)
+        db = 20 * np.log10(np.sqrt(np.mean(y[-n - SR // 4:-SR // 4] ** 2)) / np.sqrt(np.mean(chord[SR:] ** 2)))
+        assert abs(db) < 0.5, f"notes after silence changed by {db:+.1f} dB"
+        if st:
+            tone = np.concatenate([np.zeros(2 * SR), 0.3 * np.sin(2 * np.pi * 440 * t)]).astype(np.float32)
+            assert abs(dominant_freq(engine.pitch_shift(tone, st)[-2 * SR:]) - 440 * 2 ** (st / 12)) < 1.0
+
     @pytest.mark.parametrize("params", [{"tempo": 0}, {"tempo": 1000}, {"semitones": 99}])
     def test_out_of_range(self, fixtures, params):
         with pytest.raises(UserError):

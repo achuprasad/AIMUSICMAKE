@@ -1,7 +1,7 @@
 # Installer test: silent install -> verify files, shortcuts, uninstall entry -> smoke test the
 # installed exe -> silent uninstall -> verify removal.
-#   .\scripts\test-installer.ps1 -Setup "<path>\Mixlumo-Setup-1.2.0.exe"
-param([Parameter(Mandatory)][string]$Setup, [string]$Version = "1.2.0")
+#   .\scripts\test-installer.ps1 -Setup "<path>\Mixlumo-Setup-1.2.1.exe"
+param([Parameter(Mandatory)][string]$Setup, [string]$Version = "1.2.1")
 $songs = "$env:USERPROFILE\Music\Mixlumo"
 $songsExisted = Test-Path $songs
 $ErrorActionPreference = "Continue"

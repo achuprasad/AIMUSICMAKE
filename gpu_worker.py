@@ -112,8 +112,9 @@ class GpuWorker:
 
     def kill(self):
         """For tests: simulate a crash."""
-        if self.alive:
-            self.proc.kill()
+        proc = self.proc   # own reference: run() clears self.proc as soon as it notices the crash
+        if proc is not None and proc.is_alive():
+            proc.kill()
             t = time.time()
-            while self.proc.is_alive() and time.time() - t < 10:
+            while proc.is_alive() and time.time() - t < 10:
                 time.sleep(0.05)

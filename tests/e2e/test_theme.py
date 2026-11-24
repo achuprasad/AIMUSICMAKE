@@ -109,7 +109,7 @@ def test_brand_and_search_tags(page, app_url):
     assert "vocal remover" in meta["description"].lower() and len(meta["description"]) <= 200
     assert meta["og:title"].startswith("Mixlumo") and meta["application-name"] == "Mixlumo"
     expect(page.locator(".brand b")).to_have_text("Mixlumo")
-    expect(page.locator("#appVersion")).to_have_text("1.2.0")
+    expect(page.locator("#appVersion")).to_have_text("1.2.1")
 
 
 def test_copyright_notice_is_visible(page, app_url):

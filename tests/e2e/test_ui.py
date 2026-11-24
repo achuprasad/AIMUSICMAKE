@@ -1,6 +1,7 @@
 """Browser end-to-end tests (Playwright). Run with --browser chromium --browser firefox."""
 import re
 
+import numpy as np
 import pytest
 from playwright.sync_api import expect
 
@@ -328,6 +329,44 @@ def test_live_lofi_and_echo_preview(page, app_url, fixtures, errors):
     page.uncheck("#echoOn")
     page.uncheck("#lofiOn")
     page.wait_for_function(f"{fx}.wet.gain.value < 0.001 && {fx}.ngain.gain.value < 0.0005 && {fx}.shaper.curve === null")
+    assert not errors
+
+
+def _compare_module():
+    import importlib.util
+    from pathlib import Path
+    p = Path(__file__).resolve().parents[2] / "scripts" / "compare_preview.py"
+    spec = importlib.util.spec_from_file_location("compare_preview", p)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_live_preview_sounds_like_the_download(page, app_url, tmp_path, errors):
+    """Lo-fi chill preset (tape speed + lo-fi + echo): the preview's real output and the downloaded file
+    must match in pitch, speed, echo timing/level, tone colour, loudness and hiss (scripts/compare_preview.py)."""
+    cmp = _compare_module()
+    src = tmp_path / "preview test signal.wav"
+    cmp.make_signal(src)
+    goto(page, app_url, "pitch")
+    page.set_input_files('[data-drop="pitch"] input[type=file]', str(src))
+    page.click('[data-drop="pitch"] .preview .play', timeout=20_000)
+    page.wait_for_function("SRC.pitch && SRC.pitch.fx && !SRC.pitch.audio.paused", timeout=10_000)
+    params = cmp.apply_ui(page, {"preset": "chill"})
+    xl, srl, xr, srr, name = cmp.capture_and_render(page, params)
+    L, R = cmp.measure(xl, srl, params), cmp.measure(xr, srr, params)
+    assert "lofi 55" in name and "echo 350ms" in name
+    assert abs(1200 * np.log2(L["pitch_hz"] / R["pitch_hz"])) < 2, (L["pitch_hz"], R["pitch_hz"])
+    assert abs(L["noise_onset_s"] - R["noise_onset_s"]) < 0.01
+    assert len(L["echo_taps"]) == len(R["echo_taps"]) == 3
+    for (tl, dl), (tr, dr) in zip(L["echo_taps"], R["echo_taps"], strict=True):
+        assert abs(tl - tr) < 0.01 and abs(dl - dr) < 0.5, (L["echo_taps"], R["echo_taps"])
+    for b, vl, vr in zip(cmp.BANDS[:-1], L["bands_db"][:-1], R["bands_db"][:-1], strict=True):  # 16 kHz: ~-30 dB
+        assert abs(vl - vr) < 1.5, f"{b} Hz band: preview {vl:.1f} dB, download {vr:.1f} dB"
+    assert abs(L["tone_rms_dbfs"] - R["tone_rms_dbfs"]) < 0.5
+    assert abs(L["noise_rms_dbfs"] - R["noise_rms_dbfs"]) < 0.5
+    assert abs(L["floor_dbfs"] - R["floor_dbfs"]) < 1.5
+    assert abs(L["peak"] - R["peak"]) < 0.05 * R["peak"]
     assert not errors
 
 
