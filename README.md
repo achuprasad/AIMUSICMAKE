@@ -10,7 +10,7 @@ and [docs/CLOUD_HANDOVER.md](docs/CLOUD_HANDOVER.md).
 | Tool | What it does |
 |---|---|
 | **Vocal Remover / Stem Splitter** | BS-RoFormer and Mel-Band RoFormer (vocals + instrumental), Demucs (2 / 4 / 6 stems: vocals, drums, bass, other, guitar, piano). Live progress %, ETA, synced stem mixer (mute / solo / volume), export mix |
-| **Pitch & Tempo** | Speed 0.5×–2× with or without keeping pitch (tape mode), pitch ±12 semitones, live preview before rendering |
+| **Pitch & Tempo** | Speed 0.5×–2× with or without keeping pitch (tape mode), pitch ±12 semitones, **Lo-fi** and **Echo** effects with presets (Lo-fi chill, Slowed + Echo), live preview before rendering |
 | **Key & BPM Finder** | Key, Camelot code, BPM (half/double), confidence |
 | **Cutter** | Waveform range selection, fade in/out |
 | **Joiner** | Reorder tracks, crossfade |

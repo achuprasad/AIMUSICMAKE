@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-11-24
 
 ### Added
 - Pitch & Tempo: **Lo-fi** (warm filtering, tape saturation, bit-crush, soft vinyl hiss and crackle;

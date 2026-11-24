@@ -5,7 +5,7 @@
 # Prerequisites: .\scripts\setup.ps1 has been run (Python env, models), Inno Setup 6 for the installer.
 param(
     [string]$OutDir = "$env:USERPROFILE\Documents\Mixlumo-Release",
-    [string]$Version = "1.1.0",
+    [string]$Version = "1.2.0",
     [switch]$SkipInstaller,
     [switch]$SkipZip
 )

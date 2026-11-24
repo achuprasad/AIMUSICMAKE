@@ -23,7 +23,7 @@ A Windows app that runs AI audio processing **locally on the user's NVIDIA GPU**
 | Vocal remover / stem splitter | BS-RoFormer (default), Mel-Band RoFormer (2 stems); Demucs (2/4/6 stems) | `tests/test_gpu.py`, MUSDB18 benchmark |
 | Live progress | Real % from the models' chunk loops, step tracker, ETA; never goes backwards | `test_progress_is_real`, GPU browser journey |
 | Stem mixer | Synced playback of all stems, mute/solo/volume, seek, export mix | `tests/e2e/test_split_gpu.py` |
-| Pitch & Tempo | Speed 0.5–2× (presets 0.75/1/1.25/1.5), *keep original pitch* (time-stretch) or tape mode, pitch ±12 st, **live preview** in the browser before rendering | unit + e2e |
+| Pitch & Tempo | Speed 0.5–2× (presets 0.75/1/1.25/1.5), *keep original pitch* (time-stretch) or tape mode, pitch ±12 st, **Lo-fi** (filter, saturation, bit-crush, vinyl hiss/crackle) and **Echo** (delay, repeats, volume) with presets, **live preview** in the browser before rendering | unit + e2e |
 | Key & BPM | Key, Camelot, BPM, confidence | unit (A major, 120 BPM) |
 | Cutter / Joiner / Converter | Fades, crossfades, 5 formats; video files accepted | unit + e2e |
 | File handling | Source preview player, Remove/Replace, 1 GB limit | e2e + API tests |
@@ -150,7 +150,7 @@ README.md, docs/CLOUD_HANDOVER.md, docs/technical-assessment.md, progress.md, SE
 THIRD_PARTY_NOTICES.md, docs/testing-strategy.md.
 
 WHAT ALREADY EXISTS (verified, do not rebuild):
-- engine.py: audio/AI processing (BS-RoFormer, Mel-Band RoFormer, Demucs 2/4/6 stems; pitch/tempo,
+- engine.py: audio/AI processing (BS-RoFormer, Mel-Band RoFormer, Demucs 2/4/6 stems; pitch/tempo, lo-fi/echo,
   key/BPM, cut, join, convert, mix) with strict input validation and real progress callbacks.
 - gpu_worker.py: runs AI jobs in a child process (crash isolation, frees all GPU memory when it exits).
 - server.py: FastAPI API (upload, job queue, progress/ETA, file serving) — LOCAL ONLY, bound to

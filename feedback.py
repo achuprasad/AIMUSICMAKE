@@ -21,7 +21,7 @@ import uuid
 from collections import defaultdict, deque
 from pathlib import Path
 
-APP_VERSION = "1.1.0"
+APP_VERSION = "1.2.0"
 
 CATEGORIES = {
     "feature": "Feature request",

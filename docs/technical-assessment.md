@@ -55,7 +55,7 @@ Dockerfile, CI workflows, LICENSE/README, frontend build system, desktop packagi
 | AI vocal removal / 2-, 4- and 6-stem separation | GPU tests + benchmark: BS-RoFormer vocals SDR 12.5 dB, Demucs 4-stem drums 7.1 dB / bass 11.1 dB |
 | Live progress percentage, steps, ETA | `test_progress_is_real`, GPU browser journey |
 | Stem mixer (synced playback, mute/solo/volume, export mix) | GPU e2e journey |
-| Pitch & tempo (time-stretch or tape mode), live preview | engine + e2e tests |
+| Pitch & tempo (time-stretch or tape mode), lo-fi and echo effects, live preview | engine + e2e tests |
 | Key / BPM / Camelot | unit tests (A major ✓, 120 BPM ✓) |
 | Cut with fades, join with crossfade, convert (wav/mp3/flac/ogg/m4a) | unit + e2e |
 | Source preview player, Remove / Replace | e2e |
