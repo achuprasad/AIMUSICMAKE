@@ -410,6 +410,8 @@ def test_every_control_has_an_accessible_name(page, app_url, fixtures):
 
 def test_keyboard_opens_file_picker(page, app_url):
     page.goto(app_url)
+    # wait until the page script has wired the drop zone (CI runners can be slower than the keypress)
+    page.wait_for_function("""document.querySelector('[data-drop="split"] .drop').onkeydown !== null""")
     page.focus('[data-drop="split"] .drop')
     with page.expect_file_chooser(timeout=5000):
         page.keyboard.press("Enter")
