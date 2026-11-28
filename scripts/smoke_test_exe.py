@@ -56,7 +56,8 @@ def main(exe):
     env.update(USERPROFILE=str(profile), LOCALAPPDATA=str(profile / "AppData" / "Local"),
                AUDIO_STUDIO_OUT=str(tmp / "out"), AUDIO_STUDIO_UPLOADS=str(tmp / "uploads"),
                AUDIO_STUDIO_FEEDBACK=str(tmp / "feedback.jsonl"))
-    for k in ("AUDIO_STUDIO_MODELS", "TORCH_HOME", "VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME"):
+    for k in ("AUDIO_STUDIO_MODELS", "TORCH_HOME", "VIRTUAL_ENV", "PYTHONPATH", "PYTHONHOME", "AUDIO_STUDIO_VOICES",
+              "AUDIO_STUDIO_VOICE_PYTHON", "MIXLUMO_VOICE_FAKE", "AUDIO_STUDIO_HOME"):
         env.pop(k, None)
     env["PATH"] = os.pathsep.join(p for p in env["PATH"].split(os.pathsep)
                                   if "ffmpeg" not in p.lower() and not (Path(p) / "ffmpeg.exe").exists())
@@ -83,7 +84,16 @@ def main(exe):
         check("exe starts and serves the API", info, f"in {time.time() - t:.0f}s, device={info and info['device']}")
         if not info:
             return 1
-        check("UI page is served", b"Mixlumo" in urllib.request.urlopen(URL, timeout=10).read())  # noqa: S310
+        html = urllib.request.urlopen(URL, timeout=10).read()  # noqa: S310
+        check("UI page is served", b"Mixlumo" in html)
+        # Malayalam Voice Studio: present and honest about its state. On a fresh PC the separate voice environment
+        # (scripts/setup-voice.ps1) is not installed yet, so the page must say so rather than fail.
+        vs = call("GET", "/api/voice/status")
+        check("Malayalam Voice page and status", b'id="page-voice"' in html and vs["available"] and len(vs["tones"]) == 17
+              and vs["installed"] is False, f"installed={vs['installed']} tones={len(vs['tones'])}")
+        check("voice worker is bundled", (Path(exe).parent / "_internal" / "voice_worker.py").is_file())
+        builtins = [p for p in call("GET", "/api/voice/profiles")["items"] if p["builtin"]]
+        check("built-in voices listed", len(builtins) == 7, f"{len(builtins)}")
 
         sr = 44100
         tt = np.arange(sr * 8) / sr

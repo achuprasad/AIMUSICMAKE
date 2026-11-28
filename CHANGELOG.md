@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 — 2026-11-28
 
 ### Added
 - **Web app in Docker**: multi-stage `Dockerfile` (CPU or NVIDIA GPU via `TORCH_INDEX`), `docker-compose.yml`

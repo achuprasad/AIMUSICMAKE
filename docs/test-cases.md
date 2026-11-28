@@ -1,8 +1,8 @@
 # Test cases — Mixlumo
 
-Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality gate (`run_tests.ps1 -Gpu`) of 2026-11-24 (release build of 1.2.1) passed every case below, nothing skipped. The packaged app is also tested by `scripts/smoke_test_exe.py` and `scripts/test-installer.ps1`. UI tests run once per browser (Chromium and Microsoft Edge).
+Generated from `pytest --collect-only` on 2026-11-28. Results: the full quality gate (`run_tests.ps1 -Gpu`) of 2026-11-28 (release build of 1.3.0) passed every case below, nothing skipped. The packaged app is also tested by `scripts/smoke_test_exe.py` and `scripts/test-installer.ps1`. UI tests run once per browser (Chromium and Microsoft Edge).
 
-**359 test cases** in 11 files.
+**465 test cases** in 16 files.
 
 ## End-to-end — main journey on GPU (1)
 
@@ -84,7 +84,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_brand_and_search_tags` |
 | — | `test_copyright_notice_is_visible` |
 
-## Integration, security & load — HTTP API (64)
+## Integration, security & load — HTTP API (65)
 
 `tests/test_api.py` · Stage 4 of `run_tests.ps1`
 
@@ -97,6 +97,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_clean_temp_files_only_on_explicit_call` |
 | — | `test_second_instance_detects_port_in_use` |
 | — | `test_server_only_listens_on_localhost` |
+| — | `test_web_mode_disables_open_folder` |
 | TestUpload | `test_valid_audio` |
 | TestUpload | `test_video_is_accepted` |
 | TestUpload | `test_mime_spoofing_is_rejected[spoofed_mp3]` |
@@ -253,7 +254,7 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | TestEnvFile | `test_missing_file` |
 | — | `test_secrets_are_never_committed` |
 
-## Unit — Windows desktop launcher (10)
+## Unit — Windows desktop launcher (14)
 
 `tests/test_desktop.py` · Stage 3 of `run_tests.ps1`
 
@@ -267,6 +268,10 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_redirect_output_writes_log` |
 | — | `test_port_detection_and_foreign_app` |
 | — | `test_refuses_port_used_by_another_program` |
+| — | `test_same_version_already_running_is_reused` |
+| — | `test_other_or_older_version_is_never_reused[info0]` |
+| — | `test_other_or_older_version_is_never_reused[info1]` |
+| — | `test_free_port_is_started_and_foreign_port_is_busy` |
 | — | `test_wait_until_ready_times_out_quickly` |
 | — | `test_find_edge_returns_existing_path_or_none` |
 
@@ -440,6 +445,142 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | — | `test_worker_exits_when_parent_is_killed` |
 | — | `test_parent_never_initialises_cuda` |
 
+## Unit — Malayalam story scripts (15)
+
+`tests/test_story_script.py` · Stage 3 of `run_tests.ps1`
+
+| Group | Test case |
+|---|---|
+| — | `test_story_is_parsed_into_steps` |
+| — | `test_tags_and_emoji_are_never_spoken` |
+| — | `test_effect_and_quotes` |
+| — | `test_named_speaker_and_emotion` |
+| — | `test_a_narration_line_ending_with_colon_is_not_a_speaker` |
+| — | `test_events_on_their_own_line` |
+| — | `test_whisper_is_an_emotion` |
+| — | `test_unknown_tags_are_reported_not_spoken` |
+| — | `test_tag_case_spacing_and_underscores` |
+| — | `test_laugh_after_text_on_same_line` |
+| — | `test_model_sound_tags_stay_inside_the_line` |
+| — | `test_malayalam_joiners_are_kept_and_text_normalised` |
+| — | `test_numbers_to_words` |
+| — | `test_empty_and_bad_input` |
+| — | `test_very_long_line_is_reported` |
+
+## Unit — voice worker process and pipe (11)
+
+`tests/test_voice_engine.py` · Stage 3 of `run_tests.ps1`
+
+| Group | Test case |
+|---|---|
+| — | `test_malayalam_survives_the_pipe_unchanged` |
+| — | `test_ping_reports_fake_mode` |
+| — | `test_profile_and_generation` |
+| — | `test_profile_errors_are_user_messages[args0-not found]` |
+| — | `test_profile_errors_are_user_messages[args1-exact words]` |
+| — | `test_empty_line_is_a_user_error` |
+| — | `test_crash_mid_job_is_reported_and_next_call_recovers` |
+| — | `test_worker_that_died_while_idle_is_restarted_silently` |
+| — | `test_stop_ends_the_process` |
+| — | `test_not_installed_message` |
+| — | `test_unknown_command` |
+
+## Unit — Voice Studio profiles, tones, rendering (51)
+
+`tests/test_voice_studio.py` · Stage 3 of `run_tests.ps1`
+
+| Group | Test case |
+|---|---|
+| TestValidation | `test_transcript` |
+| TestValidation | `test_name` |
+| TestValidation | `test_good_reference` |
+| TestValidation | `test_bad_reference[audio0-Only 1.0 s]` |
+| TestValidation | `test_bad_reference[audio1-too long]` |
+| TestValidation | `test_bad_reference[audio2-too quiet]` |
+| TestValidation | `test_bad_reference[audio3-distorted]` |
+| TestValidation | `test_bad_reference[audio4-empty]` |
+| TestValidation | `test_bad_reference[audio5-empty]` |
+| TestValidation | `test_reference_warnings` |
+| TestProfiles | `test_consent_is_required` |
+| TestProfiles | `test_create_rename_list_delete` |
+| TestProfiles | `test_ids_are_validated[../../etc]` |
+| TestProfiles | `test_ids_are_validated[..]` |
+| TestProfiles | `test_ids_are_validated[builtin-../x]` |
+| TestProfiles | `test_ids_are_validated[ABCDEF123456]` |
+| TestProfiles | `test_ids_are_validated[aaaaaaaaaaaa/..]` |
+| TestProfiles | `test_ids_are_validated[]` |
+| TestProfiles | `test_ids_are_validated[None]` |
+| TestProfiles | `test_ids_are_validated[5]` |
+| TestProfiles | `test_unknown_tone_path` |
+| TestProfiles | `test_builtins_cannot_be_renamed` |
+| TestProfiles | `test_best_tone` |
+| TestProfiles | `test_neutral_is_removed_last` |
+| TestTones | `test_thirteen_presets_first` |
+| TestTones | `test_speed` |
+| TestTones | `test_exact_lines_are_left_as_spoken` |
+| TestTones | `test_shaping_changes_level_and_stays_safe` |
+| TestPlan | `test_request_defaults` |
+| TestPlan | `test_bad_requests[p0-Type some Malayalam]` |
+| TestPlan | `test_bad_requests[p1-Type some Malayalam]` |
+| TestPlan | `test_bad_requests[p2-Malayalam only]` |
+| TestPlan | `test_bad_requests[p3-too long]` |
+| TestPlan | `test_bad_requests[p4-valid voice]` |
+| TestPlan | `test_bad_requests[p5-valid voice]` |
+| TestPlan | `test_bad_requests[p6-character voices]` |
+| TestPlan | `test_bad_requests[p7-Invalid tone]` |
+| TestPlan | `test_bad_requests[p8-intensity]` |
+| TestPlan | `test_bad_requests[p9-speed must be a number]` |
+| TestPlan | `test_bad_requests[p10-Invalid format]` |
+| TestPlan | `test_bad_requests[not a dict-Invalid request]` |
+| TestPlan | `test_story_plan` |
+| TestPlan | `test_tags_only` |
+| TestRender | `test_render_story` |
+| TestRender | `test_regenerate_one_line` |
+| TestRender | `test_cancel` |
+| TestRender | `test_user_voice_with_tone_sample` |
+| TestRender | `test_profile_job_rules` |
+| TestRender | `test_a_line_that_fails_is_retried_then_left_silent` |
+| TestRender | `test_voice_without_samples` |
+| TestRender | `test_status` |
+
+## Integration — Voice Studio HTTP API (18)
+
+`tests/test_voice_api.py` · Stage 4 of `run_tests.ps1`
+
+| Group | Test case |
+|---|---|
+| — | `test_status` |
+| — | `test_builtin_voices_are_listed` |
+| — | `test_clone_voice_lifecycle` |
+| — | `test_unknown_or_malicious_ids[..%2F..%2Fwindows]` |
+| — | `test_unknown_or_malicious_ids[builtin-..]` |
+| — | `test_unknown_or_malicious_ids[0123456789ab]` |
+| — | `test_unknown_or_malicious_ids[pid3]` |
+| — | `test_builtins_are_protected` |
+| — | `test_profile_job_needs_an_upload` |
+| — | `test_clone_rate_limit` |
+| — | `test_speak_story_and_regenerate_a_line` |
+| — | `test_regenerate_needs_a_finished_voice_job` |
+| — | `test_client_cannot_choose_the_folder` |
+| — | `test_english_text_is_refused` |
+| — | `test_cancel` |
+| — | `test_cross_site_requests_are_blocked` |
+| — | `test_web_mode_disables_the_voice_studio` |
+| — | `test_release_gpu_stops_the_voice_engine` |
+
+## End-to-end — Voice Studio page (Chromium + Edge) (6)
+
+`tests/e2e/test_voice_ui.py` · Stage 5 of `run_tests.ps1`
+
+| Group | Test case |
+|---|---|
+| — | `test_page_controls_and_tones` |
+| — | `test_tag_insert_and_character_detection` |
+| — | `test_speak_story_play_and_regenerate_a_line` |
+| — | `test_english_is_refused_with_a_clear_message` |
+| — | `test_add_rename_and_delete_a_voice` |
+| — | `test_voice_page_on_a_phone` |
+
 ## Requirement traceability
 
 | Policy requirement | Covered by |
@@ -457,6 +598,11 @@ Generated from `pytest --collect-only` on 2026-11-24. Results: the full quality 
 | Audio effects (lo-fi, echo) | `TestEffects` (level, length, bit depth, echo timing, tail cap), `test_effect_controls_disabled_until_switched_on`, `test_effect_presets`, `test_live_lofi_and_echo_preview`, `test_render_with_lofi_and_echo` |
 | Live preview matches the download (pitch, speed, echo, tone colour, loudness, hiss) | `test_live_preview_sounds_like_the_download`, `scripts/compare_preview.py` (9 cases) |
 | Key change / time stretch keep loudness and pitch (incl. after silence) | `test_key_and_stretch_keep_loudness`, `test_notes_after_silence_keep_their_level_and_pitch` |
+| Voice Studio: Malayalam input, Unicode, scripts and tags | `test_story_script.py`, `TestPlan`, `test_english_text_is_refused` |
+| Voice Studio: tones and emotion strategy | `TestTones`, `test_render_story` (real vs approximate), `test_user_voice_with_tone_sample` |
+| Voice Studio: worker process, failure recovery, cancel | `test_voice_engine.py`, `test_crash_mid_job_is_reported_and_next_call_recovers`, `test_cancel`, `test_a_line_that_fails_is_retried_then_left_silent` |
+| Voice cloning security: consent, ids, traversal, rate limit, deletion, web mode | `TestProfiles`, `test_clone_voice_lifecycle`, `test_unknown_or_malicious_ids`, `test_clone_rate_limit`, `test_client_cannot_choose_the_folder`, `test_web_mode_disables_the_voice_studio` |
+| Voice Studio real model | `scripts/voice_real_check.py` (11 checks, run on a PC with the voice environment) |
 | Clipping, distortion | `test_clipping_is_prevented`, `test_pure_tone_is_not_distorted`, benchmark clipping check |
 | Vocal / instrument leakage, separation quality | `test_two_stem_engines`, `test_demucs_multistem`, `benchmarks/audio_quality.py` |
 | GPU memory | `test_gpu_memory_is_released_between_engines`, `test_two_stem_engines` (< 3800 MB), benchmark |

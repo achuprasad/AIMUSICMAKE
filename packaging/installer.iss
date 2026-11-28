@@ -1,7 +1,7 @@
 ; Inno Setup script for Mixlumo (offline build).  Built by scripts\build-windows.ps1.
 ; Per-user install: no administrator rights needed, installs to %LOCALAPPDATA%\Programs.
 #ifndef AppVersion
-  #define AppVersion "1.2.1"
+  #define AppVersion "1.3.0"
 #endif
 #ifndef SourceDir
   #error SourceDir must point at the PyInstaller output folder

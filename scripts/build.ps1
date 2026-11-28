@@ -2,7 +2,7 @@
 #   1. full quality gate (must PASS, GPU stages included)
 #   2. offline Windows app + portable ZIP + Setup.exe (scripts\build-windows.ps1, includes an exe smoke test)
 #   .\scripts\build.ps1 -SkipTests   build only (not for releases)
-param([string]$Version = "1.2.1", [switch]$SkipTests)
+param([string]$Version = "1.3.0", [switch]$SkipTests)
 $Here = $PSScriptRoot
 if (-not $SkipTests) {
     & "$Here\test.ps1" -Gpu
