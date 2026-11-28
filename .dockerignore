@@ -6,4 +6,10 @@
 !server.py
 !feedback.py
 !notify.py
+!voice_engine.py
+!voice_studio.py
+!voice_profiles.py
+!voice_tones.py
+!story_script.py
+!voice_worker.py
 !static/

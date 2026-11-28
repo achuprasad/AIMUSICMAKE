@@ -71,6 +71,8 @@ ENV PATH=/opt/venv/bin:$PATH \
 
 WORKDIR /app
 COPY --chown=root:root engine.py gpu_worker.py server.py feedback.py notify.py ./
+# server.py imports the Voice Studio modules; the studio itself is refused in web mode (no accounts)
+COPY --chown=root:root voice_engine.py voice_studio.py voice_profiles.py voice_tones.py story_script.py voice_worker.py ./
 COPY --chown=root:root static ./static
 
 USER mixlumo
