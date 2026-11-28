@@ -20,6 +20,9 @@ _TMP = Path(tempfile.mkdtemp(prefix="las-tests-"))
 os.environ["AUDIO_STUDIO_OUT"] = str(_TMP / "out")
 os.environ["AUDIO_STUDIO_UPLOADS"] = str(_TMP / "uploads")
 os.environ["AUDIO_STUDIO_FEEDBACK"] = str(_TMP / "feedback.jsonl")
+os.environ["AUDIO_STUDIO_VOICES"] = str(_TMP / "voices")       # never the user's real voice profiles
+os.environ["MIXLUMO_VOICE_FAKE"] = "1"                          # voice tests use the worker's stand-in synthesiser
+os.environ["AUDIO_STUDIO_VOICE_PYTHON"] = sys.executable
 # never read the developer's private .env and never send real e-mail from tests
 os.environ["AUDIO_STUDIO_NO_DOTENV"] = "1"
 for _k in ("SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_FROM", "FEEDBACK_NOTIFY_TO"):

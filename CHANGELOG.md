@@ -7,6 +7,20 @@
   and a GPU override. Data lives in a `/data` volume; models download on first use. See `docs/docker.md`.
 - `AUDIO_STUDIO_WEB=1` (web mode: no "Open folder" buttons) and `AUDIO_STUDIO_HOST` (listen address,
   still `127.0.0.1` by default; the image sets `0.0.0.0`).
+- **Malayalam Voice Studio** (new page): type Malayalam and hear it spoken, on this PC, offline after setup.
+  - Engine: OmniVoice (k2-fsa) in its own worker process and Python environment (`scripts/setup-voice.ps1`), so it
+    never conflicts with the vocal remover. Model weights are CC-BY-NC: personal, non-commercial use.
+  - 13 tone presets plus 4 story tones. A tone is spoken genuinely when the voice has a sample in that tone, otherwise
+    shaped (marked "approximate"). Built-in voices have a real whisper.
+  - Story scripts: tags for tones, laughs, sighs, pauses and effects (`[dragon voice]` …); characters (`Name: "…"`) get
+    their own voices. Each line can be played and regenerated.
+  - 7 built-in voices (designed once, then frozen so characters stay consistent), and your own cloned voices:
+    record or upload 3-10 s, exact transcript, required consent, a sample per tone, rename and delete.
+    Recordings are not kept.
+  - Fast on 4 GB GPUs: fp16 weights with fp32 maths on cards without tensor cores (4.6x faster on a GTX 1650), and
+    voice profiles encoded on the CPU. Only one AI model uses the GPU at a time (automatic hand-over).
+  - Safety: Malayalam-only validation, path and id checks, a rate limit on cloning, cross-site blocking, an AI-speech
+    disclosure, licence attribution. 100+ new automated tests, plus `scripts/voice_real_check.py` for the real model.
 
 ### Fixed
 - Opening Mixlumo while an **older** Mixlumo was still running showed the old one (it reused whatever

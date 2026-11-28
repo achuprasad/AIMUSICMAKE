@@ -8,7 +8,8 @@ from playwright.sync_api import expect
 pytestmark = pytest.mark.e2e
 
 PAGES = {"split": "Vocal Remover & Stem Splitter", "pitch": "Pitch & Tempo Changer", "analyze": "Key & BPM Finder",
-         "cut": "Audio Cutter", "join": "Audio Joiner", "convert": "Audio Converter", "support": "Help & Feedback"}
+         "cut": "Audio Cutter", "join": "Audio Joiner", "convert": "Audio Converter", "support": "Help & Feedback",
+         "voice": "Malayalam Voice Studio"}
 
 
 def goto(page, url, name):

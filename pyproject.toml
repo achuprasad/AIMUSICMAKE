@@ -28,7 +28,8 @@ ignore_missing_imports = true
 check_untyped_defs = true
 
 [tool.coverage.run]
-source = ["engine", "server", "gpu_worker", "desktop", "notify", "feedback"]
+source = ["engine", "server", "gpu_worker", "desktop", "notify", "feedback", "voice_engine", "voice_studio", "voice_profiles",
+          "voice_tones", "story_script"]
 branch = true
 
 [tool.coverage.report]

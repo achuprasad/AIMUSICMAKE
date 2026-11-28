@@ -10,9 +10,11 @@ from PyInstaller.utils.hooks import collect_all
 
 ROOT = Path(SPECPATH).parent  # noqa: F821 - provided by PyInstaller
 
-datas = [(str(ROOT / "static"), "static")]
+datas = [(str(ROOT / "static"), "static"),
+         (str(ROOT / "voice_worker.py"), ".")]   # run by the voice environment's own Python, so shipped as source
 binaries = []
-hiddenimports = ["server", "engine", "gpu_worker", "notify", "feedback", "uvicorn.logging", "uvicorn.loops.auto",
+hiddenimports = ["server", "engine", "gpu_worker", "notify", "feedback", "voice_engine", "voice_studio", "voice_profiles",
+                 "voice_tones", "story_script", "uvicorn.logging", "uvicorn.loops.auto",
                  "uvicorn.protocols.http.auto", "uvicorn.protocols.websockets.auto", "uvicorn.lifespan.on",
                  "python_multipart", "multipart"]
 

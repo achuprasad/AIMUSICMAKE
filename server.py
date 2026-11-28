@@ -31,6 +31,9 @@ if os.environ.get("AUDIO_STUDIO_NO_DOTENV") != "1":
 import engine  # noqa: E402 - after the environment is loaded
 import feedback  # noqa: E402
 from gpu_worker import GpuWorker, WorkerCrashed  # noqa: E402
+import voice_profiles  # noqa: E402
+import voice_studio  # noqa: E402
+from voice_engine import VoiceEngine, VoiceEngineError  # noqa: E402
 
 UPLOADS = Path(os.environ.get("AUDIO_STUDIO_UPLOADS", engine.HOME / "uploads"))
 MAX_UPLOAD = int(os.environ.get("AUDIO_STUDIO_MAX_UPLOAD_MB", "1024")) * 1024 * 1024
@@ -45,7 +48,10 @@ WEB = os.environ.get("AUDIO_STUDIO_WEB") == "1"
 HOST = os.environ.get("AUDIO_STUDIO_HOST", "127.0.0.1")
 _last_activity = [time.perf_counter()]
 GPU_TOOLS = {"separate"}  # run in the worker process; everything else is CPU-only
+VOICE_TOOLS = {"voice", "voice_profile"}  # Malayalam Voice Studio: run in the voice worker (its own environment)
 worker = GpuWorker()
+voice = VoiceEngine()
+USER_ERRORS = (engine.UserError, WorkerCrashed, VoiceEngineError, voice_profiles.ProfileError)
 # Importing this module must have no side effects on disk: a stray `import server` (tests, tools)
 # once wiped a running instance's uploads mid-job. Cleanup happens only in clean_temp_files(),
 # called at real start-up after confirming no other instance owns the port.
@@ -180,6 +186,17 @@ def _resolve(tool, p):
         if "upload" not in p:
             raise HTTPException(400, "Missing 'upload'. Upload a file first.")
         p["file"] = uploads.get(str(p.pop("upload"))) or _missing()
+    if tool == "voice_profile":
+        if "upload" not in p:
+            raise HTTPException(400, "Missing 'upload'. Record or upload the voice sample first.")
+        p["file"] = uploads.get(str(p.pop("upload"))) or _missing()
+    if tool == "voice":
+        p.pop("previous", None)                                  # only the server sets this
+        if "regenerate" in p:
+            prev = jobs.get(str(p.pop("regenerate")))
+            if not prev or prev.get("tool") != "voice" or prev.get("status") != "done":
+                raise HTTPException(400, "Generate the speech first, then regenerate a line.")
+            p["previous"] = prev["result"]["folder"]             # a server-side path, never one from the client
     if tool == "join":
         ids = p.pop("uploads", None)
         if not isinstance(ids, list):
@@ -211,12 +228,32 @@ def _run(jid, tool, params):
                 job["eta"] = round((1 - frac) * elapsed / done)
 
     job["started"] = time.time()
+    if job.get("cancel"):
+        job.update(status="error", error="Cancelled.")
+        return
     report(0.0, "Starting...")
     try:
         if tool in GPU_TOOLS:
+            voice.stop()             # a 4 GB GPU holds one model at a time: give the voice engine's memory back
             res = worker.run(tool, params, report, user_error=engine.UserError)
+        elif tool in VOICE_TOOLS:
+            worker.stop()            # and the other way round
+            if tool == "voice":
+                res = voice_studio.render(params, report, voice, previous=params.get("previous"),
+                                          cancelled=lambda: bool(job.get("cancel")))
+            else:
+                try:
+                    res = voice_studio.make_profile_job(params, report, voice, params["file"])
+                finally:                 # a voice recording is not kept: remove the uploaded copy now
+                    up = Path(params["file"]).parent
+                    for k in [k for k, v in uploads.items() if Path(v).parent == up]:
+                        uploads.pop(k, None)
+                    shutil.rmtree(up, ignore_errors=True)
         else:
             res = engine.TOOLS[tool](params, report)
+        for ln in (res.get("voice") or {}).get("lines", []):
+            lp = voice_studio.line_file(res["folder"], ln["index"]) if ln["kind"] == "speech" else None
+            ln["url"] = file_url(lp) if lp else None
         for f in res.get("files", []):
             f["url"] = file_url(f["path"])
             f["name"] = Path(f["path"]).name
@@ -224,7 +261,7 @@ def _run(jid, tool, params):
             f["size"] = Path(f["path"]).stat().st_size
         job.update(status="done", progress=1.0, stage="Done", result=res, eta=0,
                    elapsed=round(time.time() - job["started"], 1))
-    except (engine.UserError, WorkerCrashed) as e:
+    except USER_ERRORS as e:
         job.update(status="error", error=str(e))
     except Exception as e:
         traceback.print_exc()
@@ -257,14 +294,21 @@ def _idle_watcher():  # pragma: no cover - timing loop; release_if_idle() is uni
 @app.post("/api/release-gpu")
 def release_gpu():
     """Free all GPU memory now (waits for a running job first). Used by the test runner and other GPU apps."""
-    return {"released": worker.stop()}
+    return {"released": worker.stop() | voice.stop()}
 
 
 @app.post("/api/jobs")
-def create_job(body: dict):
+def create_job(body: dict, request: Request):
     tool = body.get("tool")
-    if tool not in engine.TOOLS:
+    if tool not in engine.TOOLS and tool not in VOICE_TOOLS:
         raise HTTPException(400, "Unknown tool")
+    if tool in VOICE_TOOLS and WEB:
+        _voice_web_block()
+    if tool == "voice_profile":                  # counted before validation, so bad requests are limited too
+        try:
+            clone_limiter.hit(_client_key(request, "voice"))
+        except feedback.RateLimited as e:
+            raise HTTPException(429, str(e)) from None
     params = _resolve(tool, body.get("params", {}))
     finished = [k for k, j in jobs.items() if j["status"] in ("done", "error")]
     for k in finished[: max(0, len(jobs) - MAX_JOBS_KEPT)]:
@@ -274,6 +318,20 @@ def create_job(body: dict):
                  "stage": "Waiting for the previous job to finish...", "eta": None, "created": time.time()}
     pool.submit(_run, jid, tool, params)
     return {"id": jid}
+
+
+@app.post("/api/jobs/{jid}/cancel")
+def cancel_job(jid: str):
+    """Stop a waiting job, or a running voice job after its current line."""
+    job = jobs.get(jid)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    if job["status"] not in ("queued", "running"):
+        return {"cancelled": False}
+    if job["status"] == "running" and job["tool"] not in VOICE_TOOLS:
+        raise HTTPException(409, "This job can't be stopped part-way.")
+    job["cancel"] = True
+    return {"cancelled": True}
 
 
 @app.get("/api/jobs/{jid}")
@@ -379,6 +437,74 @@ def open_folder(body: dict):
     return {"ok": True}
 
 
+# ------------------------------------------------------------------ Malayalam Voice Studio
+clone_limiter = feedback.RateLimiter(limit=20, window=600)      # voice samples per 10 min
+VOICE_WEB_MSG = ("The Malayalam Voice Studio is available in the desktop app only: the web version has no user "
+                 "accounts, so voices and voice cloning can't be kept private there.")
+
+
+def _voice_web_block():
+    """Web mode has no accounts: anyone who can reach the server could clone voices or delete them. Until per-user
+    authorisation exists (docs/voice-cloning-security.md), every voice action is refused server-side."""
+    raise HTTPException(403, VOICE_WEB_MSG)
+
+
+def _voice_call(fn, *args):
+    try:
+        return fn(*args)
+    except voice_profiles.ProfileError as e:
+        raise HTTPException(404 if "not found" in str(e) else 400, str(e)) from None
+
+
+@app.get("/api/voice/status")
+def voice_status():
+    if WEB:
+        return {"installed": False, "available": False, "reason": VOICE_WEB_MSG, "tones": [], "licences": [],
+                "language": "ml", "disclosure": voice_studio.DISCLOSURE, "consent_text": voice_profiles.CONSENT_TEXT}
+    return {**voice_studio.status(voice), "available": True}
+
+
+@app.get("/api/voice/profiles")
+def voice_profiles_list():
+    if WEB:
+        _voice_web_block()
+    return {"items": voice_profiles.list_profiles()}
+
+
+@app.get("/api/voice/profiles/{pid}")
+def voice_profile_get(pid: str):
+    if WEB:
+        _voice_web_block()
+    return voice_profiles.public(_voice_call(voice_profiles.get, pid))
+
+
+@app.patch("/api/voice/profiles/{pid}")
+def voice_profile_rename(pid: str, body: dict):
+    if WEB:
+        _voice_web_block()
+    return _voice_call(voice_profiles.rename, pid, body.get("name"))
+
+
+@app.delete("/api/voice/profiles/{pid}")
+def voice_profile_delete(pid: str):
+    if WEB:
+        _voice_web_block()
+    if pid in voice_profiles.BUILTIN:
+        raise HTTPException(400, "Built-in voices can't be deleted.")
+    _voice_call(voice_profiles.delete, pid)
+    print(f"voice profile {pid} deleted", flush=True)          # audit trail: the id only, never names or audio
+    return {"ok": True}
+
+
+@app.delete("/api/voice/profiles/{pid}/tones/{tone}")
+def voice_tone_delete(pid: str, tone: str):
+    if WEB:
+        _voice_web_block()
+    if pid in voice_profiles.BUILTIN:
+        raise HTTPException(400, "Built-in voices are fixed.")
+    return _voice_call(voice_profiles.remove_tone, pid, tone)
+
+
 app.mount("/files", StaticFiles(directory=engine.OUT), name="files")
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")
 
@@ -392,6 +518,7 @@ def create_server(port):  # pragma: no cover - startup wiring; exercised by the 
 
 def shutdown():  # pragma: no cover - called by the desktop launcher on exit
     worker.stop(timeout=5)
+    voice.stop()
 
 
 if __name__ == "__main__":  # pragma: no cover - entry point; exercised by the e2e suite in a subprocess

@@ -140,6 +140,25 @@ input[type=range]{width:100%;accent-color:var(--accent)}
 .fx label.l{font-size:12.5px;margin-bottom:4px}
 .fx input[type=range]:disabled{opacity:.4}
 #fxPresets button{flex:1 1 auto}
+.vs-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.vs-tools select{max-width:230px}
+#vsScript{min-height:230px;font-size:15.5px;line-height:1.7}
+.vs-meta{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--muted);background:var(--surface-2)}
+.pill.ok{color:var(--ok-text)}.pill.warn{color:var(--warn-text)}
+.vs-cast{display:grid;gap:8px}.vs-cast .row2{align-items:center}
+.vs-lines{display:grid;gap:6px;margin-top:14px}
+.vs-line{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:8px 10px;background:var(--surface-2)}
+.vs-line .t{font-size:14px;line-height:1.5;overflow-wrap:anywhere}.vs-line .m{font-size:12px;color:var(--muted)}
+.vs-line .play{width:34px;height:34px}
+.badge{font-size:11px;border-radius:6px;padding:1px 6px;border:1px solid var(--border);margin-left:4px}
+.badge.exact{color:var(--ok-text)}.badge.shaped{color:var(--muted)}
+.voice-item{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border);padding:9px 0}
+.voice-item:last-child{border-bottom:0}.voice-item .chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.rec{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rec .dot{width:10px;height:10px;border-radius:50%;background:#ef4444;display:none}.rec.on .dot{display:inline-block;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+.small-print{font-size:11.5px;color:var(--muted);line-height:1.5;margin-top:10px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border-2);background:var(--surface-2);border-radius:10px;padding:9px 15px;font-weight:600;font-size:13.5px;transition:.15s;white-space:nowrap}
 .btn:hover{background:var(--surface-3)}
@@ -232,6 +251,7 @@ input[type=text],input[type=email]{width:100%;background:var(--surface-2);border
 .notice.ok{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.35);color:var(--ok-strong)}
 .notice.bad{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.35);color:var(--err-text)}
 .notice .btn{margin-top:10px}
+.notice.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);color:var(--warn-text)}
 .rm{display:flex;gap:12px;align-items:center;padding:11px 12px;border:1px solid var(--border);border-radius:11px;background:var(--surface-2);margin-bottom:8px}
 .rm .meta{flex:1;min-width:0}
 .rm .meta b{display:block;font-size:13.5px}
@@ -275,6 +295,10 @@ body.web [data-open]{display:none}  /* web version: results are downloaded, ther
       <button data-page="cut"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></svg>Cutter</button>
       <button data-page="join"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="7" height="10" rx="2"/><rect x="14" y="7" width="7" height="10" rx="2"/><path d="M10 12h4"/></svg>Joiner</button>
       <button data-page="convert"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 3l4 4-4 4M3 11V9a2 2 0 0 1 2-2h16M7 21l-4-4 4-4M21 13v2a2 2 0 0 1-2 2H3"/></svg>Converter</button>
+    </nav>
+    <div class="nav-label">Voice</div>
+    <nav class="nav" id="nav4">
+      <button data-page="voice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9v6M8 6v12M12 3v18M16 7v10M20 10v4"/></svg>Malayalam Voice</button>
     </nav>
     <div class="nav-label">Support</div>
     <nav class="nav" id="nav3">
@@ -363,6 +387,72 @@ body.web [data-open]{display:none}  /* web version: results are downloaded, ther
         </div>
       </div>
       <div class="card progress" id="pitchProg"></div><div class="results" id="pitchRes"></div>
+    </section>
+
+    <!-- ================= MALAYALAM VOICE STUDIO ================= -->
+    <section class="page" id="page-voice">
+      <div class="head"><div><h1>Malayalam Voice Studio</h1><p>Type Malayalam and hear it spoken: tones, characters, sounds, and your own voice.</p></div>
+        <span class="pill" id="vsStatus">Checking voice engine…</span></div>
+      <div class="grid">
+        <div class="card"><h3>Script</h3>
+          <div class="vs-tools">
+            <select id="vsTag" aria-label="Insert a tag at the cursor">
+              <option value="">＋ Insert tag…</option>
+              <optgroup label="Tones" id="vsTagTones"></optgroup>
+              <optgroup label="Sounds"><option>[laughs]</option><option>[giggles]</option><option>[bursts into laughter]</option><option>[sighs]</option><option>[gasps]</option><option>[hmm]</option></optgroup>
+              <optgroup label="Pauses"><option>[pause]</option><option>[dramatic pause]</option><option>[short pause]</option></optgroup>
+              <optgroup label="Effects"><option>[dragon voice]</option><option>[robot voice]</option><option>[echo]</option><option>[radio voice]</option></optgroup>
+            </select>
+            <button class="btn sm" id="vsExample" type="button">Load example story</button>
+            <button class="btn sm" id="vsClear" type="button">Clear</button>
+          </div>
+          <textarea id="vsScript" lang="ml" maxlength="20000" aria-label="Malayalam script" placeholder="മലയാളത്തിൽ ടൈപ്പ് ചെയ്യുക…&#10;&#10;[excited] ഒരു കൂറ്റൻ ഡ്രാഗൺ ആയിരുന്നു!&#10;[angrily] രാമേട്ടൻ: &quot;എന്താടാ ഇത്?&quot;"></textarea>
+          <div class="vs-meta hint"><span>A tag at the start of a line sets its tone. <b>Name: "…"</b> gives a character their own voice.</span><span id="vsCount">0 / 20,000</span></div>
+          <div class="field" style="margin-top:14px"><label class="l">Characters <em id="vsCastNote">found in the script</em></label><div class="vs-cast" id="vsCast"><div class="hint">No characters yet. Lines like <b>രാമേട്ടൻ: "…"</b> appear here.</div></div></div>
+        </div>
+        <div class="card"><h3>Voice &amp; tone</h3>
+          <div class="field"><label class="l" for="vsVoice">Narrator voice</label><select id="vsVoice"></select></div>
+          <div class="field"><label class="l" for="vsTone">Tone <em>for lines without a tag</em></label><select id="vsTone"></select>
+            <div class="hint" id="vsToneHint"></div></div>
+          <div class="field"><label class="l" for="vsInt">Tone intensity <em id="vsIntVal">60</em></label><input type="range" id="vsInt" min="0" max="100" step="5" value="60"></div>
+          <div class="row2">
+            <div class="field"><label class="l" for="vsSpeed">Speed <em id="vsSpeedVal">1.00×</em></label><input type="range" id="vsSpeed" min="50" max="200" step="5" value="100"></div>
+            <div class="field"><label class="l" for="vsPitch">Pitch <em id="vsPitchVal">0</em></label><input type="range" id="vsPitch" min="-6" max="6" step="0.5" value="0"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label class="l" for="vsVol">Volume <em id="vsVolVal">0 dB</em></label><input type="range" id="vsVol" min="-12" max="6" step="1" value="0"></div>
+            <div class="field"><label class="l" for="vsPause">Pauses <em id="vsPauseVal">100%</em></label><input type="range" id="vsPause" min="25" max="300" step="25" value="100"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label class="l">Quality</label><div class="seg" id="vsQual"><button class="sel" data-v="fast">Fast</button><button data-v="best">Best</button></div></div>
+            <div class="field"><label class="l" for="vsFmt">Format</label><select id="vsFmt"><option>wav</option><option selected>mp3</option><option>flac</option><option>ogg</option><option>m4a</option></select></div>
+          </div>
+          <button class="btn primary" id="vsGo" disabled>Speak</button>
+          <button class="btn" id="vsStop" style="display:none;width:100%;margin-top:8px">Stop</button>
+          <div class="small-print" id="vsLic"></div>
+        </div>
+      </div>
+      <div class="card progress" id="vsProg"></div><div class="results" id="vsRes"></div>
+      <div class="card" style="margin-top:18px"><h3>My voices</h3>
+        <div class="grid">
+          <div><div id="vsVoices"><div class="hint">Loading…</div></div></div>
+          <div class="fx" style="margin-top:0">
+            <b>Add a voice or a tone sample</b>
+            <div class="hint" style="margin:4px 0 10px">Record or upload 3-10 seconds of one person speaking Malayalam clearly, then type exactly what was said. For each tone (angry, sad, …) you can add a sample spoken in that tone: lines in that tone then sound genuinely like it.</div>
+            <div class="row2"><div class="field"><label class="l" for="vcFor">Voice</label><select id="vcFor"><option value="">New voice</option></select></div>
+              <div class="field"><label class="l" for="vcTone">Tone of this sample</label><select id="vcTone"></select></div></div>
+            <div class="field" id="vcNameRow"><label class="l" for="vcName">Name</label><input type="text" id="vcName" maxlength="40" placeholder="e.g. My voice"></div>
+            <div class="field"><label class="l">Recording</label>
+              <div class="rec" id="vcRec"><button class="btn sm" id="vcRecBtn" type="button">● Record</button><span class="dot"></span><span class="hint" id="vcRecTime" style="margin:0"></span>
+                <label class="btn sm" for="vcFile" style="cursor:pointer">Upload file</label><input type="file" id="vcFile" accept="audio/*" hidden></div>
+              <audio id="vcPreview" controls style="width:100%;margin-top:8px;display:none"></audio></div>
+            <div class="field"><label class="l" for="vcText">Exact words spoken (Malayalam)</label><textarea id="vcText" lang="ml" maxlength="400" style="min-height:70px"></textarea></div>
+            <div class="field"><label class="switch"><input type="checkbox" id="vcConsent"><span id="vcConsentText">I have the speaker's permission.</span></label></div>
+            <button class="btn primary" id="vcGo" disabled>Learn this voice</button>
+            <div class="card progress" id="vcProg" style="margin-top:10px"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ================= ANALYZE ================= -->
@@ -597,6 +687,7 @@ async function runJob(tool, params, progEl, btn) {
   setStep(1);
   try {
     const {id} = await api("/api/jobs", {tool, params});
+    progEl.dataset.job = id;
     while (true) {
       await new Promise(r => setTimeout(r, 450));
       const j = await api("/api/jobs/" + id);
@@ -612,7 +703,7 @@ async function runJob(tool, params, progEl, btn) {
         progEl.classList.add("done"); setStep(steps.length);
         $(".pg-stage", progEl).textContent = "Completed"; $(".eta", progEl).textContent = `Finished in ${fmtDur(j.elapsed)}`;
         $(".pg-pct", progEl).innerHTML = `100<small>%</small>`;
-        btn.disabled = false; return j.result;
+        btn.disabled = false; return Object.assign(j.result, {job: id});
       }
       if (j.status === "error") throw new Error(j.error);
     }
@@ -1262,6 +1353,207 @@ matchMedia("(prefers-color-scheme: light)").addEventListener("change", () => app
   setAccent(hexOk(saved) ? saved : ACCENTS[0][1]);
 })();
 api("/api/support").then(s => { $("#appVersion").textContent = s.version; $$(".appVersion2").forEach(e => e.textContent = s.version); }).catch(() => {});
+
+/* ================= Malayalam Voice Studio ================= */
+const VS = {status: null, profiles: [], result: null, recorder: null, sample: null};
+const VS_EXAMPLE = `കേരളത്തിലെ മനോഹരമായ ഒരു കൊച്ചു ഗ്രാമമായ പുഞ്ചക്കരയിൽ, ഒരു ദിവസം രാവിലെ ആകാശത്തുനിന്ന് എന്തോ വലിയൊരു സാധനം താഴേക്ക് പറന്നുവന്നു.
+[dramatically] അത് ഒരു ഹെലികോപ്റ്ററായിരുന്നില്ല... വിമാനവുമായിരുന്നില്ല...
+[excited] ഒരു കൂറ്റൻ ഡ്രാഗൺ ആയിരുന്നു!
+[dragon voice] "ഗ്ര്ര്ര്ര്... എനിക്ക് ഭക്ഷണം വേണം!"
+[angrily] രാമേട്ടൻ: "എന്താടാ ഇത്? രാവിലെ തന്നെ ഗ്യാസ് സിലിണ്ടർ പൊട്ടിയ പോലെ ഒരു ശബ്ദം!"
+[deadpan] രാമേട്ടൻ: "എടാ മോനേ... നീ ഇവിടെ വന്നത് ചായ കുടിക്കാനാണോ, അതോ എന്റെ കട കത്തിക്കാനാണോ?"
+[giggles]
+[whispers] പക്ഷേ ഇന്നും ഒരു രഹസ്യമുണ്ട്...
+[dramatic pause]
+പക്ഷേ രാമേട്ടന്റെ കടം വീട്ടാൻ മാത്രം കഴിയില്ല!
+[bursts into laughter]`;
+async function vfetch(method, url, body) {
+  const r = await fetch(url, {method, headers: {"Content-Type": "application/json"}, body: body ? JSON.stringify(body) : undefined});
+  if (!r.ok) { let m = r.statusText; try { m = (await r.json()).detail || m; } catch {} throw new Error(m); }
+  return r.json();
+}
+const toneLabel = k => { const t = (VS.status?.tones || []).find(x => x.key === k); return t ? `${t.en} · ${t.ml}` : k; };
+const voiceName = id => (VS.profiles.find(p => p.id === id) || {}).name || id;
+function voiceOptions(sel, value) {
+  const builtin = VS.profiles.filter(p => p.builtin), mine = VS.profiles.filter(p => !p.builtin && Object.keys(p.tones || {}).length);
+  sel.innerHTML = `<optgroup label="Built-in voices">${builtin.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</optgroup>`
+    + (mine.length ? `<optgroup label="My voices">${mine.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("")}</optgroup>` : "");
+  if (value && [...sel.options].some(o => o.value === value)) sel.value = value;
+}
+async function loadVoice() {
+  try {
+    VS.status = await api("/api/voice/status");
+    VS.profiles = VS.status.available === false ? [] : (await api("/api/voice/profiles")).items;
+  } catch (e) { $("#vsStatus").textContent = "Voice engine unavailable: " + e.message; return; }
+  const st = VS.status, pill = $("#vsStatus");
+  if (st.available === false) {                       // web version: no accounts, so no voice studio
+    pill.className = "pill warn"; pill.textContent = "Desktop app only";
+    $("#vsVoices").innerHTML = `<div class="notice show warn">${esc(st.reason)}</div>`;
+    vsReady(); vcReady(); return;
+  }
+  pill.className = "pill " + (st.installed ? "ok" : "warn");
+  pill.textContent = st.fake ? "Test mode (stand-in voice)" : st.installed ? "Voice engine ready · Malayalam" : "Voice engine not installed: run scripts\\setup-voice.ps1";
+  const tones = st.tones;
+  const main = tones.filter(t => t.main), extra = tones.filter(t => !t.main);
+  const opts = list => list.map(t => `<option value="${t.key}">${esc(t.en)} · ${esc(t.ml)}</option>`).join("");
+  const keepTone = $("#vsTone").value || "neutral";
+  $("#vsTone").innerHTML = opts(main) + `<optgroup label="Story tones">${opts(extra)}</optgroup>`;
+  $("#vsTone").value = keepTone;
+  $("#vcTone").innerHTML = opts(main) + `<optgroup label="Story tones">${opts(extra)}</optgroup>`;
+  $("#vsTagTones").innerHTML = tones.map(t => `<option>[${t.key === "whisper" ? "whispers" : t.key}]</option>`).join("");
+  voiceOptions($("#vsVoice"), $("#vsVoice").value || "builtin-female-adult");
+  $("#vcFor").innerHTML = `<option value="">New voice</option>` + VS.profiles.filter(p => !p.builtin).map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join("");
+  $("#vcConsentText").textContent = st.consent_text;
+  $("#vsLic").innerHTML = `${esc(st.disclosure)} Personal, non-commercial use.<br>${st.licences.map(esc).join("<br>")}`;
+  renderVoices(); detectCast(); vsReady(); vcReady(); toneHint();
+}
+function renderVoices() {
+  const host = $("#vsVoices"), mine = VS.profiles.filter(p => !p.builtin);
+  if (!mine.length) { host.innerHTML = `<div class="hint">No voices of your own yet. Built-in voices are always available. Add yours on the right.</div>`; return; }
+  host.innerHTML = mine.map(p => `<div class="voice-item" data-id="${esc(p.id)}"><div><b>${esc(p.name)}</b>
+      <div class="chips">${Object.keys(p.tones || {}).map(t => `<span class="badge exact" title="Has its own ${esc(t)} sample">${esc(toneLabel(t))}<button class="iconbtn" data-rmtone="${esc(t)}" aria-label="Remove the ${esc(t)} sample" title="Remove">×</button></span>`).join("") || '<span class="hint" style="margin:0">no samples</span>'}</div></div>
+      <div style="display:flex;gap:6px"><button class="btn sm" data-rename>Rename</button><button class="btn sm danger" data-del>Delete</button></div></div>`).join("");
+  $$(".voice-item", host).forEach(row => {
+    const id = row.dataset.id;
+    $("[data-rename]", row).onclick = async () => {
+      const name = prompt("New name for this voice:", voiceName(id)); if (!name) return;
+      try { await vfetch("PATCH", "/api/voice/profiles/" + id, {name}); await loadVoice(); } catch (e) { toast(e.message); }
+    };
+    $("[data-del]", row).onclick = async () => {
+      if (!confirm(`Delete the voice "${voiceName(id)}" and all its samples? This can't be undone.`)) return;
+      try { await vfetch("DELETE", "/api/voice/profiles/" + id); toast("Voice deleted"); await loadVoice(); } catch (e) { toast(e.message); }
+    };
+    $$("[data-rmtone]", row).forEach(b => b.onclick = async () => {
+      try { await vfetch("DELETE", `/api/voice/profiles/${id}/tones/${b.dataset.rmtone}`); await loadVoice(); } catch (e) { toast(e.message); }
+    });
+  });
+}
+/* characters: "Name: "…"" lines and unnamed quoted lines, as the server's story parser reads them */
+function detectCast() {
+  const names = [], seen = new Set(); let quoted = false;
+  $("#vsScript").value.split("\n").forEach(raw => {
+    const line = raw.replace(/\[[^\[\]]{1,40}\]/g, " ").trim();
+    const m = line.match(/^([^\s"“:?!.,][^"“:?!.]{0,40}?)\s*:\s*-?\s*(?=["“]|\S)(.+)$/);
+    if (m && m[1].trim().split(/\s+/).length <= 3 && m[2].trim()) { const n = m[1].trim(); if (!seen.has(n)) { seen.add(n); names.push(n); } }
+    else if (/^["“].*["”]$/.test(line)) quoted = true;
+  });
+  if (quoted) names.push("voice");
+  const host = $("#vsCast"), prev = {};
+  $$("select", host).forEach(s => prev[s.dataset.name] = s.value);
+  if (!names.length) { host.innerHTML = `<div class="hint">No characters yet. Lines like <b>രാമേട്ടൻ: "…"</b> appear here.</div>`; return; }
+  const defaults = ["builtin-male-adult", "builtin-female-young", "builtin-male-elder", "builtin-child", "builtin-female-elder", "builtin-male-young"];
+  host.innerHTML = names.map((n, i) => `<div class="row2"><span>${n === "voice" ? "Other quoted lines" : esc(n)}</span><select data-name="${esc(n)}" aria-label="Voice for ${n === "voice" ? "other quoted lines" : esc(n)}"></select></div>`).join("");
+  $$("select", host).forEach((s, i) => voiceOptions(s, prev[s.dataset.name] || defaults[i % defaults.length]));
+}
+function toneHint() {
+  const v = $("#vsVoice").value, t = $("#vsTone").value, p = VS.profiles.find(x => x.id === v);
+  const exact = p && (p.tones || {})[t];
+  $("#vsToneHint").textContent = t === "neutral" ? "" : exact ? "This voice has its own sample in this tone: it is spoken genuinely in that tone."
+    : (p && p.builtin && t === "whisper") ? "Built-in voices have a real whisper." : "Approximate: shaped from the normal voice (speed, pitch, level). Add a sample in this tone for the real thing.";
+}
+function vsReady() {
+  const n = $("#vsScript").value.length;
+  $("#vsCount").textContent = `${n.toLocaleString()} / 20,000`;
+  $("#vsGo").disabled = !n || !VS.status || !VS.status.installed;
+}
+$("#vsScript").addEventListener("input", () => { vsReady(); clearTimeout(VS._cast); VS._cast = setTimeout(detectCast, 300); });
+$("#vsTag").onchange = e => {
+  const tag = e.target.value; e.target.value = ""; if (!tag) return;
+  const ta = $("#vsScript"), a = ta.selectionStart, b = ta.selectionEnd;
+  ta.value = ta.value.slice(0, a) + tag + " " + ta.value.slice(b); ta.focus(); ta.selectionStart = ta.selectionEnd = a + tag.length + 1;
+  vsReady(); detectCast();
+};
+$("#vsExample").onclick = () => { $("#vsScript").value = VS_EXAMPLE; vsReady(); detectCast(); };
+$("#vsClear").onclick = () => { $("#vsScript").value = ""; vsReady(); detectCast(); };
+[["vsInt", v => v], ["vsSpeed", v => (v / 100).toFixed(2) + "×"], ["vsPitch", v => (v > 0 ? "+" : "") + v], ["vsVol", v => v + " dB"], ["vsPause", v => v + "%"]]
+  .forEach(([id, f]) => { const el = $("#" + id); el.oninput = () => $(`#${id}Val`).textContent = f(el.value); });
+$("#vsVoice").onchange = toneHint; $("#vsTone").onchange = toneHint;
+const vsQual = picker($("#vsQual"));
+function vsParams() {
+  const cast = {}; $$("#vsCast select").forEach(s => cast[s.dataset.name] = s.value);
+  return {script: $("#vsScript").value, voice: $("#vsVoice").value, cast, tone: $("#vsTone").value, intensity: +$("#vsInt").value,
+          speed: +$("#vsSpeed").value / 100, pitch: +$("#vsPitch").value, volume: +$("#vsVol").value, pause: +$("#vsPause").value / 100,
+          quality: vsQual(), format: $("#vsFmt").value};
+}
+async function vsRun(params, btn) {
+  stopAll(); $("#vsStop").style.display = ""; VS.running = true;
+  try { return await runJob("voice", params, $("#vsProg"), btn); }
+  finally { $("#vsStop").style.display = "none"; VS.running = false; }
+}
+$("#vsStop").onclick = async () => {
+  const jid = $("#vsProg").dataset.job;
+  if (jid) await vfetch("POST", `/api/jobs/${jid}/cancel`).then(() => toast("Stopping after the current line…")).catch(e => toast(e.message));
+};
+$("#vsGo").onclick = async () => {
+  try { const res = await vsRun(vsParams(), $("#vsGo")); showVoiceResult(res); await loadVoice(); } catch {}
+};
+function showVoiceResult(res) {
+  VS.result = res;
+  const host = $("#vsRes");
+  singleResult(host, res, "Your Malayalam speech is ready");
+  const v = res.voice || {};
+  const warn = (v.warnings || []).length ? `<div class="notice show warn" style="margin-top:10px">${v.warnings.map(esc).join("<br>")}</div>` : "";
+  host.insertAdjacentHTML("beforeend", `<div class="hint">${esc(v.disclosure || "")} ${v.seconds ? "· " + fmtT(v.seconds) : ""}</div>${warn}
+    <div class="vs-lines">${(v.lines || []).map(ln => ln.kind !== "speech" ? "" : `<div class="vs-line" data-i="${ln.index}">
+      <button class="play" aria-label="Play line ${ln.index + 1}">${ICON.play}</button>
+      <div><div class="t" lang="ml">${esc(ln.text)}</div><div class="m">${esc(voiceName(ln.voice))} · ${esc(toneLabel(ln.tone))}${ln.effect ? " · " + esc(ln.effect) : ""}
+        <span class="badge ${ln.tone_sample === "exact" ? "exact" : "shaped"}" title="${ln.tone_sample === "exact" ? "Spoken from a sample in this tone" : "Shaped from the normal voice"}">${ln.tone === "neutral" ? "" : ln.tone_sample === "exact" ? "real tone" : "approximate"}</span>
+        ${ln.seconds ? " · " + ln.seconds.toFixed(1) + " s" : ""}</div></div>
+      <button class="btn sm" data-regen title="Speak this line again (a new take)">↻ Regenerate</button></div>`).join("")}</div>`);
+  $$(".vs-line", host).forEach(row => {
+    const ln = v.lines[+row.dataset.i], btn = $(".play", row);
+    const audio = new Audio(ln.url + "?t=" + Date.now()); players.add(audio);
+    btn.onclick = () => { if (audio.paused) { stopAll(); audio.play().catch(() => {}); } else audio.pause(); };   // play may be interrupted by Stop/regenerate
+    audio.onplay = () => btn.innerHTML = ICON.pause; audio.onpause = audio.onended = () => btn.innerHTML = ICON.play;
+    $("[data-regen]", row).onclick = async e => {
+      try { const r = await vsRun({regenerate: res.job, lines: [ln.index]}, e.currentTarget); r.job = res.job; showVoiceResult(r); toast(`Line ${ln.index + 1} spoken again`); } catch {}
+    };
+  });
+}
+/* ---------- add a voice / tone sample ---------- */
+function vcReady() {
+  const isNew = !$("#vcFor").value;
+  $("#vcNameRow").style.display = isNew ? "" : "none";
+  $("#vcGo").disabled = !(VS.sample && $("#vcText").value.trim() && $("#vcConsent").checked && (!isNew || $("#vcName").value.trim()) && VS.status && VS.status.installed);
+  $("#vcGo").textContent = isNew ? "Learn this voice" : "Add this tone sample";
+}
+["vcFor", "vcText", "vcName", "vcConsent", "vcTone"].forEach(id => $("#" + id).addEventListener("input", vcReady));
+$("#vcFor").onchange = vcReady;
+function setSample(blob, name) {
+  VS.sample = new File([blob], name, {type: blob.type || "audio/webm"});
+  const a = $("#vcPreview"); a.src = URL.createObjectURL(blob); a.style.display = ""; vcReady();
+}
+$("#vcFile").onchange = e => { const f = e.target.files[0]; if (f) setSample(f, f.name); e.target.value = ""; };
+$("#vcRecBtn").onclick = async () => {
+  const box = $("#vcRec");
+  if (VS.recorder) { VS.recorder.stop(); return; }
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: false, noiseSuppression: true}}); }
+  catch { toast("Microphone not available or permission denied"); return; }
+  const rec = new MediaRecorder(stream), chunks = []; VS.recorder = rec;
+  const t0 = Date.now(); box.classList.add("on"); $("#vcRecBtn").textContent = "■ Stop";
+  const tick = setInterval(() => { const s = (Date.now() - t0) / 1000; $("#vcRecTime").textContent = s.toFixed(1) + " s (3-10 s is best)"; if (s >= 15) rec.stop(); }, 100);
+  rec.ondataavailable = e => chunks.push(e.data);
+  rec.onstop = () => { clearInterval(tick); stream.getTracks().forEach(t => t.stop()); box.classList.remove("on"); $("#vcRecBtn").textContent = "● Record again";
+    VS.recorder = null; setSample(new Blob(chunks, {type: rec.mimeType}), "recording.webm"); };
+  rec.start();
+};
+$("#vcGo").onclick = async () => {
+  const btn = $("#vcGo"), prog = $("#vcProg");
+  try {
+    btn.disabled = true;
+    const up = await upload(VS.sample, () => {});
+    const params = {upload: up.id, transcript: $("#vcText").value, tone: $("#vcTone").value, consent: $("#vcConsent").checked};
+    if ($("#vcFor").value) params.profile = $("#vcFor").value; else params.name = $("#vcName").value;
+    const res = await runJob("voice_profile", params, prog, btn);
+    const q = res.quality || {};
+    toast(`Voice learned: ${res.profile.name}`);
+    if ((q.warnings || []).length) prog.insertAdjacentHTML("beforeend", `<div class="notice show warn">${q.warnings.map(esc).join("<br>")}</div>`);
+    VS.sample = null; $("#vcPreview").style.display = "none"; $("#vcText").value = ""; $("#vcRecTime").textContent = "";
+    await loadVoice(); $("#vsVoice").value = res.profile.id; toneHint();
+  } catch (e) { btn.disabled = false; }
+};
+$$('.nav button[data-page="voice"]').forEach(b => b.addEventListener("click", loadVoice));
 </script>
 </body>
 </html>

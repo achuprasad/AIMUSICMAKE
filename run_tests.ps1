@@ -27,12 +27,12 @@ function Invoke-Stage($name, [scriptblock]$cmd) {
 }
 
 $env:CUDA_VISIBLE_DEVICES = "-1"   # non-GPU stages must not touch the graphics card
-Invoke-Stage "1 Lint (ruff)"             { & "$V\ruff.exe" check engine.py server.py gpu_worker.py desktop.py notify.py feedback.py tests benchmarks scripts packaging }
-Invoke-Stage "2 Type check (mypy)"       { & $Py -m mypy engine.py server.py gpu_worker.py desktop.py notify.py feedback.py benchmarks\metrics.py benchmarks\audio_quality.py }
-Invoke-Stage "3 Unit tests"              { & $Py -m pytest tests\test_engine.py tests\test_engine_models.py tests\test_worker.py tests\test_desktop.py -q -p no:cacheprovider -rs @Cov }
-Invoke-Stage "4 Integration tests"       { & $Py -m pytest tests\test_api.py tests\test_feedback.py tests\test_notify.py -q -p no:cacheprovider -rs @Cov }
-Invoke-Stage "5 Frontend e2e (Chromium)" { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py -q -p no:cacheprovider -rs --browser chromium }
-Invoke-Stage "5 Frontend e2e (Edge)"     { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py -q -p no:cacheprovider -rs --browser chromium --browser-channel msedge }
+Invoke-Stage "1 Lint (ruff)"             { & "$V\ruff.exe" check engine.py server.py gpu_worker.py desktop.py notify.py feedback.py voice_engine.py voice_worker.py voice_studio.py voice_profiles.py voice_tones.py story_script.py tests benchmarks scripts packaging }
+Invoke-Stage "2 Type check (mypy)"       { & $Py -m mypy engine.py server.py gpu_worker.py desktop.py notify.py feedback.py voice_engine.py voice_studio.py voice_profiles.py voice_tones.py story_script.py benchmarks\metrics.py benchmarks\audio_quality.py }
+Invoke-Stage "3 Unit tests"              { & $Py -m pytest tests\test_engine.py tests\test_engine_models.py tests\test_worker.py tests\test_desktop.py tests\test_story_script.py tests\test_voice_engine.py tests\test_voice_studio.py -q -p no:cacheprovider -rs @Cov }
+Invoke-Stage "4 Integration tests"       { & $Py -m pytest tests\test_api.py tests\test_feedback.py tests\test_notify.py tests\test_voice_api.py -q -p no:cacheprovider -rs @Cov }
+Invoke-Stage "5 Frontend e2e (Chromium)" { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py tests\e2e\test_voice_ui.py -q -p no:cacheprovider -rs --browser chromium }
+Invoke-Stage "5 Frontend e2e (Edge)"     { & $Py -m pytest tests\e2e\test_ui.py tests\e2e\test_theme.py tests\e2e\test_voice_ui.py -q -p no:cacheprovider -rs --browser chromium --browser-channel msedge }
 Invoke-Stage "6 Security (pip-audit)"    { & $Py -m pip_audit --progress-spinner off }
 Invoke-Stage "7 Build verification"      {
     # isolated folders: a build check must never touch the real app's uploads or output
